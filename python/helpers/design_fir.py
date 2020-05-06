@@ -5,7 +5,7 @@ import logging
 from .window_func import window_func
 
 
-def design_fir(N: int, F: np.ndarray, A:np.ndarray, nfft: Optional[int] = None, W: Optional[str] = "hamming"
+def design_fir(N: int, F: np.ndarray, A: np.ndarray, nfft: Optional[int] = None, W: Optional[np.ndarray] = None
                ) -> np.ndarray:
     """
 
@@ -31,11 +31,7 @@ def design_fir(N: int, F: np.ndarray, A:np.ndarray, nfft: Optional[int] = None, 
     if nfft is None:
         nfft = max(512., 2 ** np.ceil(np.log(N) / np.log(2)))
 
-    try:
-        W = window_func(W, m=N+1)
-    except Exception as e:
-        logging.exception(exc_info=e)
-        logging.info("Falling back to `hamming` filter...")
+    if W is None:
         W = window_func('hamming', m=N + 1)
 
     # calculate interpolated frequency response
