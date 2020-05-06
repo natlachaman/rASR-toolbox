@@ -1,8 +1,9 @@
+from typing import Union
 import numpy as np
 import scipy
 
 
-def window_func(name: str, m: int, **kwargs) -> np.ndarray:
+def window_func(name: str, m: int, **kwargs: Union[float, int]) -> np.ndarray:
     """Design a window for a given window function.
 
     Parameters
@@ -24,7 +25,7 @@ def window_func(name: str, m: int, **kwargs) -> np.ndarray:
               'triang'   : Triangular window
     m: int
         number of points in the window
-    kwargs: dict
+    kwargs: Union[float, int]
         window parameter(s) (if any)
 
     Returns

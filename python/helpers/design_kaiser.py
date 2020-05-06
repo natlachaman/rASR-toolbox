@@ -36,4 +36,4 @@ def design_kaiser(lo: float, hi: float, attenuation: int, odd: bool) -> np.ndarr
         N += 1
 
     # design the window
-    return window_func('kaiser', m=N, beta=beta)
+    return window_func('kaiser', m=N, param=beta)
