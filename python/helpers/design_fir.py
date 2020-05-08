@@ -1,25 +1,33 @@
 from typing import Optional
 import numpy as np
 import scipy
-import logging
 from .window_func import window_func
 
 
 def design_fir(N: int, F: np.ndarray, A: np.ndarray, nfft: Optional[int] = None, W: Optional[np.ndarray] = None
                ) -> np.ndarray:
-    """
+    """Design an FIR filter using the frequency-sampling method.
+
+    The frequency response is interpolated cubically between the specified frequency points.
 
     Parameters
     ----------
-    N
-    F
-    A
-    nfft
-    W
+    N: int
+        order of the filter
+    F: np.ndarray
+        vector of frequencies at which amplitudes shall be defined (starts with 0 and goes up to 1; try to avoid too
+        sharp transitions)
+    A: np.ndarray
+        vector of amplitudes, one value per specified frequency
+    nfft: Optional[int] (Default: None)
+        optionally number of FFT bins to use
+    W: Optional[np.ndarray] (Default: None)
+        optionally the window function to use (default: Hamming)
 
     Returns
     -------
-
+    np.ndarray
+        designed filter kernel
 
     Notes
     -----
