@@ -48,9 +48,14 @@ def clean_flatlines(signal: RawEEGLAB, max_flatline_duration: int = 5 ,max_allow
         logging.info("Now removing flat-line channels...")
 
         if len(signal.info['chs']) == len(signal._data):
-            signal.info['chs'] = [i for (i, v) in zip(signal.info["chs"], include_channels) if v]
+            # update info
+            signal.info["chs"] = [i for (i, v) in zip(signal.info["chs"], include_channels) if v]
+            # signal.info["bads"] = [i for (i, v) in zip(signal.ch_names, include_channels) if not v]
             signal.nbchan = sum(include_channels)
+
+            # apply cleaning
             signal.data = signal.data[include_channels, :]
-            signal.info["bads"].extend(include_channels)
+            pos = signal._get_channel_positions(signal.ch_names)[include_channels, :]
+            signal._set_channel_positions(pos, signal.ch_names)
 
     return signal

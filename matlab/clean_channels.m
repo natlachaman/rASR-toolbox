@@ -108,7 +108,7 @@ usable_channels = find(~cellfun('isempty',x) & ~cellfun('isempty',y) & ~cellfun(
 locs = [cell2mat(x(usable_channels));cell2mat(y(usable_channels));cell2mat(z(usable_channels))];
 X = X(:,usable_channels);
   
-% caculate all-channel reconstruction matrices from random channel subsets      
+% caculate all-channel reconstruction matrices from random channel subsets
 P = hlp_microcache('cleanchans',@calc_projector,locs,num_samples,subset_size);
 corrs = zeros(length(usable_channels),W);
         
