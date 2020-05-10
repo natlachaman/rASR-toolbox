@@ -5,6 +5,7 @@ import logging
 from mne.io.eeglab.eeglab import RawEEGLAB
 from mne.channels.interpolation import _make_interpolation_matrix
 from .helpers.design_fir import design_fir
+from .helpers.utils import _mad, _sliding_window
 
 
 def clean_channels(signal: RawEEGLAB, corr_threshold: float = 0.85, noise_threshold: int = 4, window_len: int = 5,
@@ -47,35 +48,17 @@ def clean_channels(signal: RawEEGLAB, corr_threshold: float = 0.85, noise_thresh
         data set with bad channels removed
 
     """
-    def _mad(X):
-        """Median absolute deviation."""
-        return np.median(np.abs(X - np.median(X, axis=0)), axis=0)
-
-    def _sliding_window(array, window, steps=1, axis=1):
-        """Efficient sliding window."""
-        # Sub-array shapes
-        shape = list(array.shape)
-        shape[axis] = np.ceil(array.shape[axis] / steps - window / steps + 1).astype(int)
-        shape.append(window)
-
-        # Strides (in bytes)
-        strides = list(array.strides)
-        strides[axis] *= steps
-        strides.append(array.strides[axis])
-
-        # Window samples
-        return np.lib.stride_tricks.as_strided(array, shape=shape, strides=strides)
-
     # flag channels
     if (max_broken_time >= 0) and (max_broken_time <= 1):
         max_broken_time = signal._data.shape[1] * max_broken_time
     else:
         max_broken_time = signal.info["sfreq"] * max_broken_time
 
-    C, S = signal._data.shape
+    # optionally ignore < 50 Hz spectral components...
     logging.info("Scannning for bad channels...")
-    if signal.info["sfreq"] > 100:
 
+    C, S = signal._data.shape
+    if signal.info["sfreq"] > 100:
         # remove signal content above 50 Hz
         F = np.r_[np.array([0, 45, 50]) * 2 / signal.info["sfreq"], 1]
         A = np.array([1, 1, 0, 0])
@@ -123,7 +106,7 @@ def clean_channels(signal: RawEEGLAB, corr_threshold: float = 0.85, noise_thresh
 
     # flag channels to include
     flagged = np.vstack(corrs) < corr_threshold
-    include_channels = np.sum(flagged, axis=1) * (window_len * signal.info["sfreq"]) < max_broken_time
+    include_channels = np.sum(flagged, axis=1) * (window_len * signal.info["sfreq"]) <= max_broken_time
     include_channels = np.logical_or(include_channels, noise_mask)
 
     # remove them
@@ -144,7 +127,7 @@ def clean_channels(signal: RawEEGLAB, corr_threshold: float = 0.85, noise_thresh
             pos = signal._get_channel_positions(signal.ch_names)[include_channels, :]
             signal._set_channel_positions(pos, signal.ch_names)
 
-    signal.info["clean_channel_mask"] = include_channels
+            signal.info["clean_channel_mask"] = include_channels
 
     return signal
 
