@@ -77,7 +77,8 @@ def clean_channels_nolocs(signal: RawEEGLAB, min_corr: float = .45, ignored_quan
     # for each window, flag channels with too low correlation to any other channel (outside the ignored quantile)
     flagged = []
     retained = np.arange(C - np.ceil(C * ignored_quantile))
-    for x in _sliding_window(X, window=window_len * signal.info["sfreq"]):
+    window_len *= signal.info["sfreq"]
+    for x in _sliding_window(X, window=window_len):
         sort_cc = np.sort(np.abs(np.corrcoef(x)), axis=0)
         flagged.append(np.all(sort_cc[retained, :] < min_corr, axis=1))
 

@@ -98,15 +98,16 @@ def clean_channels(signal: RawEEGLAB, corr_threshold: float = 0.85, noise_thresh
     interpolation = np.vstack(interpolation)
 
     # calculate each channel's correlation to its RANSAC reconstruction for each window
+    window_len *= signal.info["sfreq"]
     corrs = [] # (channels, window)
-    for x in _sliding_window(X, window=window_len * signal.info["sfreq"]):
+    for x in _sliding_window(X, window=window_len):
         y = np.sort(np.reshape(interpolation * x, (window_len, C, num_samples)), axis=2)
         y = y[:, :, int(np.round(num_samples / 2))]
         corrs.append(np.sum(y * x, axis=1) / (np.sqrt(np.sum(x ** 2, axis=1)) * np.sqrt(np.sum(y ** 2, axis=1))))
 
     # flag channels to include
     flagged = np.vstack(corrs) < corr_threshold
-    include_channels = np.sum(flagged, axis=1) * (window_len * signal.info["sfreq"]) <= max_broken_time
+    include_channels = np.sum(flagged, axis=1) * window_len <= max_broken_time
     include_channels = np.logical_or(include_channels, noise_mask)
 
     # remove them
