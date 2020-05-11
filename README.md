@@ -25,7 +25,7 @@
 |   |   |-- geometric_median.m -- gmean() from scipy package
 |   |   |-- hlp_handleerror.m -- python/helpers/decorators.py 
 |   |   |-- hlp_memfree.m -- does not apply in python
-|   |   |-- hlp_microcache.m -- python/helpers/decorators.py (functools)
+|   |   |-- hlp_microcache.m -- @lr_cache in functools
 |   |   |-- hlp_split.m -- split() native python function
 |   |   |-- hlp_varargin2struct.m -- does not apply in python
 |   |   |-- sphericalSplineInterpolate.m -- _make_interpolation() from mne package
