@@ -15,7 +15,7 @@
 |   |-- eegplugin_clean_rawdata.m -- does not apply in python (EEGLab plugin)
 |   |-- pop_clean_rawdata.m -- does not apply in python (EEGLab plugin)
 |   |-- private
-|   |   |-- block_geometric_median.m --
+|   |   |-- block_geometric_median.m -- gmean() from scipy package
 |   |   |-- design_fir.m -- python/helpers/design_fir.py
 |   |   |-- design_kaiser.m -- python/helpers/design_kaiser.py
 |   |   |-- filter_fast.m -- lfilter() from scipy package
