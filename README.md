@@ -4,7 +4,7 @@
 |-- matlab
 |   |-- asr_calibrate.m -- 
 |   |-- asr_process.m -- 
-|   |-- clean_artifacts.m -- python/clean_artifacts.py
+|   |-- clean_artifacts.m -- 
 |   |-- clean_asr.m --
 |   |-- clean_channels.m -- python/clean_channels.py
 |   |-- clean_channels_nolocs.m -- python/clean_channels_nolocs.py
@@ -18,11 +18,11 @@
 |   |   |-- block_geometric_median.m --
 |   |   |-- design_fir.m -- python/helpers/design_fir.py
 |   |   |-- design_kaiser.m -- python/helpers/design_kaiser.py
-|   |   |-- filter_fast.m --
-|   |   |-- filtfilt_fast.m -- filtfilt() from scipy
+|   |   |-- filter_fast.m -- lfilter() from scipy package
+|   |   |-- filtfilt_fast.m -- filtfilt() from scipy package
 |   |   |-- findjobj.m -- does not apply in python
 |   |   |-- fit_eeg_distribution.m -- python/helpers/fit_egg_distribution.py
-|   |   |-- geometric_median.m --
+|   |   |-- geometric_median.m -- gmean() from scipy package
 |   |   |-- hlp_handleerror.m -- python/helpers/decorators.py 
 |   |   |-- hlp_memfree.m -- does not apply in python
 |   |   |-- hlp_microcache.m -- python/helpers/decorators.py (functools)
