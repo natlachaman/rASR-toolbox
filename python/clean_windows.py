@@ -65,14 +65,14 @@ def clean_windows(signal: RawEEGLAB, max_bad_channels: float = .2, z_thresholds:
     window_stride = window_len * (1 - window_overlap)
 
     logging.info("Determining time window rejection thresholds...")
-    wz = []
     X = _sliding_window(signal._data, window=window_len, steps=window_stride)
+    z_rms = np.zeros_like(X[0, :, :])
     for c in reversed(range(C)):
         # compute RMS amplitude for each window
-        X = np.sqrt(np.sum(signal._data[c, :, :] ** 2, axis=1) / window_len)
+        _X = np.sqrt(np.sum(X[c, :, :] ** 2, axis=1) / window_len)
 
         # robustly fit a distribution to the clean EEG part
-        mu, sigma, _, _ = fit_eeg_distribution(X=X,
+        mu, sigma, _, _ = fit_eeg_distribution(X=_X,
                                                min_clean_fraction=min_clean_fraction,
                                                max_dropout_fraction=max_dropout_fraction,
                                                quants=truncate_quant,
@@ -80,16 +80,30 @@ def clean_windows(signal: RawEEGLAB, max_bad_channels: float = .2, z_thresholds:
                                                beta=shape_range)
 
         # calculate z scores relative to that
-        wz.append((X - mu) / sigma)
+        z_rms[c, :] = (X - mu) / sigma
 
     # sort z scores into quantiles
-    swz = np.sort(wz);
+    sorted_z_rms = np.sort(z_rms)
+
     # determine which windows to remove
-    remove_mask = false(1, size(swz, 2));
-    if max(zthresholds) > 0
-        remove_mask(swz(end - max_bad_channels,:) > max(zthresholds)) = true;
-        end
-    if min(zthresholds) < 0
-        remove_mask(swz(1 + max_bad_channels,:) < min(zthresholds)) = true;
-        end
-    removed_windows = find(remove_mask);
+    max_bad_channels = int(np.round(C * max_bad_channels))
+    remove_mask = np.zeros((sorted_z_rms.shape[1],)).astype(bool)
+    if np.max(z_thresholds) > 0:
+        remove_mask[sorted_z_rms[-max_bad_channels, :] >  np.max(z_thresholds)] = True
+
+    if np.min(z_thresholds) < 0:
+        remove_mask[sorted_z_rms[max_bad_channels, :] < np.min(z_thresholds)] = True
+    remove_windows = np.where(remove_mask)[0]
+
+    sample_mask = np.ones_like(X).astype(bool)
+    sample_mask[:, remove_windows, :] = False
+    sample_mask = sample_mask.reshape((C, S))
+
+    # apply removal
+    logging.info('Removing windows...');
+    signal.data = signal._data[sample_mask]
+    signal.n_times = signal.get_data.shape[1]
+    signal.times.max = signal.times.min + (signal.n_time - 1) / signal.info["srate"]
+    signal.info["clean_sample_mask"] = sample_mask
+
+    return signal
