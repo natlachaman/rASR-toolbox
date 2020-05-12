@@ -2,6 +2,7 @@
 import numpy as np
 from scipy.signal import lfilter
 from scipy.linalg import toeplitz
+from scipy.linalg import lstsq, solve
 
 
 def _mad(X):
@@ -119,3 +120,22 @@ def _denf(R, na):
     A = np.concatenate(
         (1, np.linalg.lstsq(Rm, Rhs.T, rcond=None)[0].T), axis=None)
     return A
+
+
+def _mldivide(A, B):
+    """Matrix left-division (A\B).
+
+    Solves the AX = B for X. In other words, X minimizes norm(A*X - B), the
+    length of the vector AX - B:
+        - linalg.solve(A, B) if A is square
+        - linalg.lstsq(A, B) otherwise
+
+    References
+    ----------
+    .. [1] https://docs.scipy.org/doc/numpy/user/numpy-for-matlab-users.html
+    """
+
+    if A.shape[0] == A.shape[1]:
+        return solve(A, B)
+    else:
+        return lstsq(A, B)
