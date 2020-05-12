@@ -5,7 +5,7 @@
 |   |-- asr_calibrate.m                 -- 
 |   |-- asr_process.m                   -- 
 |   |-- clean_artifacts.m               -- 
-|   |-- clean_asr.m                     --
+|   |-- clean_asr.m                      --
 |   |-- clean_channels.m                -- python/clean_channels.py
 |   |-- clean_channels_nolocs.m         -- python/clean_channels_nolocs.py
 |   |-- clean_drifts.m                  -- python/clean_drifts.py
@@ -32,3 +32,4 @@
 |   |   |-- hlp_varargin2struct.m           -- does not apply in python
 |   |   |-- findjobj.m                      -- does not apply in python
 |   |   |-- hlp_memfree.m                   -- does not apply in python
+|   |   |-- (yukewalk() from SigProTool)    -- python/helpers/yukewalk.py
