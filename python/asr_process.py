@@ -1,11 +1,13 @@
-from typing import Tuple
+from typing import Tuple, Dict, Union, Any
 import logging
 import numpy as np
 from scipy.signal import lfilter
 from .rasr_nonlinear_eigenspace import nonlinear_eigenspace
 
-def asr_process(data: np.ndarray, srate: int, state: dict, lookahead: float, windowlen: float = 0.1,  stepsize: int = 4,
-                maxdims: int = 1, maxmem: int = 256) -> Tuple[np.ndarray, dict]:
+
+def asr_process(data: np.ndarray, srate: int, state: Dict[str: Any], lookahead: Union[float, None],
+                windowlen: float = 0.1,  stepsize: int = 4, maxdims: float = 1., maxmem: int = 256
+                ) -> Tuple[np.ndarray, dict]:
     """ Processing function for the Artifact Subspace Reconstruction (ASR) method.
 
     This function is used to clean multi-channel signal using the ASR method. The required inputs are
@@ -56,16 +58,16 @@ def asr_process(data: np.ndarray, srate: int, state: dict, lookahead: float, win
     """
     logging.info("Note: This is a Riemann adapted processing!")
     window_len = max(windowlen, 1.5 * len(data) / srate)
-    lookahead = window_len / 2
+    lookahead = window_len / 2 if lookahead is None else lookahead
 
     if maxdims < 1:
-        maxdims = round(len(data) * maxdims)
+        maxdims = int(np.round(len(data) * maxdims))
 
     if data.size == 0:
         return data, state
 
     C, S = data.shape
-    N = int(np.round(windowlen * srate))
+    # N = int(np.round(windowlen * srate))
     P = int(np.round(lookahead * srate))
 
     # initialize prior filter state by extrapolating available data into the past (if necessary)

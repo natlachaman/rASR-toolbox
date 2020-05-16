@@ -3,9 +3,9 @@
 ```
 |-- matlab
 |   |-- asr_calibrate.m                 -- python/asr_calibrate.py
-|   |-- asr_process.m                   -- 
+|   |-- asr_process.m                   -- python/asr_process.py
 |   |-- clean_artifacts.m               -- 
-|   |-- clean_asr.m                     -- 
+|   |-- clean_asr.m                     -- python/clean_asr.py
 |   |-- clean_channels.m                -- python/clean_channels.py
 |   |-- clean_channels_nolocs.m         -- python/clean_channels_nolocs.py
 |   |-- clean_drifts.m                  -- python/clean_drifts.py
