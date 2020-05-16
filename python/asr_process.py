@@ -2,7 +2,9 @@ from typing import Tuple, Dict, Union, Any
 import logging
 import numpy as np
 from scipy.signal import lfilter
+
 from .rasr_nonlinear_eigenspace import nonlinear_eigenspace
+from .helpers.positive_definite_karcher_mean import positive_definite_karcher_mean
 
 
 def asr_process(data: np.ndarray, srate: int, state: Dict[str: Any], lookahead: Union[float, None],
@@ -105,8 +107,7 @@ def asr_process(data: np.ndarray, srate: int, state: Dict[str: Any], lookahead: 
                 A = np.zeros((C, C, 2))
                 A[:, :, 0] = SCM
                 A[:, :, 1] = state["cov"]
-                # Xcov = positive_definite_karcher_mean(A); % from Manopt toolbox
-                Xcov = SCM # meanwhile
+                Xcov = positive_definite_karcher_mean(A)
             else:
                 # we do not have a previous matrix to average, we use SCM as is
                 Xcov = SCM
