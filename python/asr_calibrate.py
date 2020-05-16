@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Dict, Union, Any
 import numpy as np
 import logging
 from scipy import linalg
@@ -12,7 +12,7 @@ from .helpers.yukewalk import yulewalk
 
 def asr_calibrate(X: np.ndarray, sfreq: float , cutoff: float = 10., blocksize: int = 5, window_len: float = 0.5,
                   window_overlap: float = 0.66, max_dropout_fraction: float = 0.1, min_clean_fraction: float = 0.25
-                  ) -> Tuple[np.ndarray, np.ndarray]:
+                  ) -> Dict[str, Union[np.ndarray, Any]]:
     """Calibration function for the Artifact Subspace Reconstruction method.
 
     The input to this data is a multi-channel time series of calibration data.
@@ -129,4 +129,4 @@ def asr_calibrate(X: np.ndarray, sfreq: float , cutoff: float = 10., blocksize: 
     T = np.dot(np.diag(mu + cutoff * sigma), V.T)
     logging.info('ASR calibration complete.')
 
-    return M, T
+    return {"M": M, "T": T, "B": B, "A": A, "iir": iirstate}
