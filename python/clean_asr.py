@@ -6,8 +6,10 @@ from mne.io.eeglab.eeglab import RawEEGLAB
 from .clean_windows import clean_windows
 from .asr_calibrate import asr_calibrate
 from .asr_process import asr_process
+from .helpers.decorators import catch_exception
 
 
+@catch_exception
 def clean_asr(signal: RawEEGLAB, stepsize: Union[int, None] = None, cutoff: int = 5, windowlen: float = 0.5,
               maxdims: float = 0.66, ref_maxbadchannels: Union[float, None] = 0.075,
               ref_tolerances: Union[Tuple[float, float], None] = (-3.5, 5.5), ref_wndlen: Union[int, None] = 1

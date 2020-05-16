@@ -6,8 +6,10 @@ from mne.io.eeglab.eeglab import RawEEGLAB
 from mne.channels.interpolation import _make_interpolation_matrix
 from .helpers.design_fir import design_fir
 from .helpers.utils import _mad, _sliding_window
+from .helpers.decorators import catch_exception
 
 
+@catch_exception
 def clean_channels(signal: RawEEGLAB, corr_threshold: float = 0.85, noise_threshold: int = 4, window_len: int = 5,
                    max_broken_time: float = 0.4, num_samples: int = 50, subset_size: float = 0.25) -> RawEEGLAB:
     """Remove channels with abnormal data from a continuous data set.
@@ -112,8 +114,10 @@ def clean_channels(signal: RawEEGLAB, corr_threshold: float = 0.85, noise_thresh
 
     # remove them
     if np.mean(~include_channels) > 0.75:
-        logging.warning("More than 75% of your channels were removed -- "
-                        "this is probably caused by incorrect channel location measurements (e.g., wrong cap design).")
+        logging.exception("More than 75% of your channels were removed -- "
+                          "this is probably caused by incorrect channel " \
+                          "location measurements (e.g., wrong cap design).")
+        raise
 
     else:
         logging.info(f"Removing channels {signal.ch_names[~include_channels]} and dropping signal meta-data...")

@@ -1,8 +1,10 @@
 import numpy as np
 import logging
 from mne.io.eeglab.eeglab import RawEEGLAB
+from .helpers.decorators import catch_exception
 
 
+@catch_exception
 def clean_flatlines(signal: RawEEGLAB, max_flatline_duration: int = 5 ,max_allowed_jitter: int = 20) -> RawEEGLAB:
     """Remove (near-) flat-lined channels.
 

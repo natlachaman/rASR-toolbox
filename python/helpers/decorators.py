@@ -2,19 +2,19 @@ import functools
 import logging
 
 
-def exception(function):
+def catch_exception(func):
     """
     A decorator that wraps the passed in function and logs
     exceptions should one occur
     """
-    @functools.wraps(function)
+    @functools.wraps(func)
     def wrapper(*args, **kwargs):
         try:
-            return function(*args, **kwargs)
+            return func(*args, **kwargs)
         except:
             # log the exception
             err = "There was an exception in  "
-            err += function.__name__
+            err += func.__name__
             logging.exception(err)
             # re-raise the exception
             raise

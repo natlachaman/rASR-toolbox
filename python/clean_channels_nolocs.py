@@ -6,7 +6,10 @@ from mne.io.eeglab.eeglab import RawEEGLAB
 from .helpers.design_fir import design_fir
 from .helpers.design_kaiser import design_kaiser
 from .helpers.utils import _sliding_window
+from .helpers.decorators import catch_exception
 
+
+@catch_exception
 def clean_channels_nolocs(signal: RawEEGLAB, min_corr: float = .45, ignored_quantile: float = .1, window_len: int = 2,
                           max_broken_time: float = 0.5, linenoise_aware: bool = True) -> RawEEGLAB:
     """Remove channels with abnormal data from a continuous data set.

@@ -5,8 +5,10 @@ from mne.io.eeglab.eeglab import RawEEGLAB
 
 from .helpers.design_fir import design_fir
 from .helpers.design_kaiser import design_kaiser
+from .helpers.decorators import catch_exception
 
 
+@catch_exception
 def clean_drifts(signal: RawEEGLAB, transition: Tuple[float, float] = (0.5, 1.), attenuation: int = 80) -> RawEEGLAB:
     """Removes drifts from the data using a forward-backward high-pass filter.
 

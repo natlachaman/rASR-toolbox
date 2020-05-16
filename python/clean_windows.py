@@ -4,14 +4,16 @@ import logging
 from mne.io.eeglab.eeglab import RawEEGLAB
 
 from .helpers.utils import _sliding_window
+from .helpers.decorators import catch_exception
 from .helpers.fit_eeg_distribution import fit_eeg_distribution
 
 
+@catch_exception
 def clean_windows(signal: RawEEGLAB, max_bad_channels: float = .2, z_thresholds: Tuple[float, float] = (-3.5, 5),
                   window_len: float = .66, window_overlap: float = .66, max_dropout_fraction: float = .1,
                   min_clean_fraction: float = .25, truncate_quant: Tuple[float, float] = (0.022, 0.6),
-                  step_sizes: Tuple[float, float] = (0.01, 0.01), shape_range: Tuple[float, float, float] = (1.7, 3.5, .15)) \
-        -> (RawEEGLAB, List[bool]):
+                  step_sizes: Tuple[float, float] = (0.01, 0.01),
+                  shape_range: Tuple[float, float, float] = (1.7, 3.5, .15)) -> RawEEGLAB:
     """Remove periods with abnormally high-power content from continuous data.
 
     This function cuts segments from the data which contain high-power artifacts.
@@ -38,7 +40,7 @@ def clean_windows(signal: RawEEGLAB, max_bad_channels: float = .2, z_thresholds:
     max_dropout_fraction: float (default: 0.1)
         Maximum fraction that can have dropouts. This is the maximum fraction of time windows that may have arbitrarily
         low amplitude (e.g., due to the sensors being unplugged).
-    min_clean_fraction float (default: 0.25)
+    min_clean_fraction: float (default: 0.25)
         Minimum fraction that needs to be clean. This is the minimum fraction of time windows that need to contain
         essentially uncontaminated EEG.
     truncate_quant: Tuple[float, float] (default: (0.022, 0.6))
@@ -100,9 +102,9 @@ def clean_windows(signal: RawEEGLAB, max_bad_channels: float = .2, z_thresholds:
     sample_mask = sample_mask.reshape((C, S))
 
     # apply removal
-    logging.info('Removing windows...');
-    signal.data = signal._data[sample_mask]
-    signal.n_times = signal.get_data.shape[1]
+    logging.info('Removing windows...')
+    signal._data = signal._data[sample_mask]
+    signal.n_times = signal._data.shape[1]
     signal.times.max = signal.times.min + (signal.n_time - 1) / signal.info["srate"]
     signal.info["clean_sample_mask"] = sample_mask
 
