@@ -1,5 +1,5 @@
 import numpy as np
-import scipy
+from scipy.signal import filtfilt
 import logging
 
 from mne.io.eeglab.eeglab import RawEEGLAB
@@ -66,7 +66,7 @@ def clean_channels(signal: RawEEGLAB, corr_threshold: float = 0.85, noise_thresh
         A = np.array([1, 1, 0, 0])
         B = design_fir(100, F, A)
 
-        X = np.vstack([scipy.signal.filtfilt(B, 1, signal._data[c, :]) for c in reversed(range(C))])
+        X = np.vstack([filtfilt(B, 1, signal._data[c, :]) for c in reversed(range(C))])
 
         # determine z-scored level of EM noise-to-signal ratio for each channel
         noisiness = _mad(signal._data - X) / _mad(X)
@@ -91,25 +91,27 @@ def clean_channels(signal: RawEEGLAB, corr_threshold: float = 0.85, noise_thresh
 
     # interpolation: RANSAC method
     np.random.seed(435656)
-    subset_size = int(np.round(subset_size * len(signal._data)))
+    subset_size = int(np.round(subset_size * C))
     logging.info('Computing interpolation matrix from {} sensor positions using RANSAC method'.format(len(pos)))
     interpolation = []
-    for _ in reversed(range(num_samples)):
+    for _ in range(num_samples):
+        interp_sample = np.zeros((C, C))
         subset = np.random.choice(len(pos), size=subset_size, replace=False)
-        interpolation.append( _make_interpolation_matrix(pos[subset, :], pos))
-    interpolation = np.vstack(interpolation)
+        interp_sample[subset, :] = _make_interpolation_matrix(pos[subset, :], pos).T
+        interpolation.append(interp_sample)
+    interpolation = np.hstack(interpolation)
 
     # calculate each channel's correlation to its RANSAC reconstruction for each window
-    window_len *= signal.info["sfreq"]
+    window_len *= int(signal.info["sfreq"])
     corrs = [] # (channels, window)
-    for x in _sliding_window(X, window=window_len):
-        y = np.sort(np.reshape(interpolation * x, (window_len, C, num_samples)), axis=2)
+    for x in _sliding_window(X, window=window_len, steps=window_len, axis=1).swapaxes(0, 1):
+        y = np.sort(np.reshape(np.dot(x.T, interpolation), (window_len, C, num_samples)), axis=2)
         y = y[:, :, int(np.round(num_samples / 2))]
-        corrs.append(np.sum(y * x, axis=1) / (np.sqrt(np.sum(x ** 2, axis=1)) * np.sqrt(np.sum(y ** 2, axis=1))))
+        corrs.append(np.sum(np.dot(x, y), axis=1) / (np.sqrt(np.sum(x ** 2, axis=1)) * np.sqrt(np.sum(y ** 2, axis=0))))
 
     # flag channels to include
     flagged = np.vstack(corrs) < corr_threshold
-    include_channels = np.sum(flagged, axis=1) * window_len <= max_broken_time
+    include_channels = np.sum(flagged, axis=0) * window_len <= max_broken_time
     include_channels = np.logical_or(include_channels, noise_mask)
 
     # remove them
@@ -120,12 +122,13 @@ def clean_channels(signal: RawEEGLAB, corr_threshold: float = 0.85, noise_thresh
         raise
 
     else:
-        logging.info(f"Removing channels {signal.ch_names[~include_channels]} and dropping signal meta-data...")
+        channel_names = [ch for ch, v in zip(signal.ch_names, include_channels) if ~v]
+        logging.info(f"Removing channels {channel_names} and dropping signal meta-data...")
         if len(signal.info["chs"]) == len(signal._data):
             # update info
             signal.info["chs"] = [i for (i, v) in zip(signal.info["chs"], include_channels) if v]
             # signal.info["bads"] = [i for (i, v) in zip(signal.ch_names, include_channels) if not v]
-            signal.nbchan = sum(include_channels)
+            signal.nbchan = np.sum(include_channels)
 
             # apply cleaning
             signal.data = signal.data[include_channels, :]

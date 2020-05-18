@@ -33,17 +33,18 @@ def clean_flatlines(signal: RawEEGLAB, max_flatline_duration: int = 5 ,max_allow
     `signal.specicaact` are not included when the data is read with `mne` package.
     """
     # flag channels
-    include_channels = np.ones((1, signal.info["nchan"]))
+    include_channels = np.ones((signal.info["nchan"],), dtype="bool")
     eps = np.finfo(float).eps
     for c in range(signal.info["nchan"]):
-        allowed_or_not = np.abs(np.diff(signal._data[c, :])) < (max_allowed_jitter * eps)
-        zero_intervals = np.diff([False, allowed_or_not, False]).nonzero()[0].reshape(2, 1)
+        allowed_or_not = np.r_[False, np.abs(np.diff(signal._data[c, :])) < (max_allowed_jitter * eps)]
+        zero_intervals = np.diff(np.r_[allowed_or_not, False]).cumsum() * allowed_or_not
+        lengths_intervals = np.unique(zero_intervals, return_counts=True)[1][1:]
 
-        if max(zero_intervals[:, 2]) - max(zero_intervals[:, 1]) > (max_flatline_duration * signal.info["sfreq"]):
+        if lengths_intervals.size > 0 and  max(lengths_intervals) > (max_flatline_duration * signal.info["sfreq"]):
             include_channels[c] = 0
 
     # remove them
-    if sum(include_channels) == signal.info["nchan"]:
+    if np.sum(include_channels) == 0:
         logging.warning("All channels have a flat-line portion; not removing anything.")
 
     else:
@@ -53,10 +54,10 @@ def clean_flatlines(signal: RawEEGLAB, max_flatline_duration: int = 5 ,max_allow
             # update info
             signal.info["chs"] = [i for (i, v) in zip(signal.info["chs"], include_channels) if v]
             # signal.info["bads"] = [i for (i, v) in zip(signal.ch_names, include_channels) if not v]
-            signal.nbchan = sum(include_channels)
+            signal.nbchan = np.sum(include_channels)
 
             # apply cleaning
-            signal.data = signal.data[include_channels, :]
+            signal.data = signal._data[include_channels, :]
             pos = signal._get_channel_positions(signal.ch_names)[include_channels, :]
             signal._set_channel_positions(pos, signal.ch_names)
 

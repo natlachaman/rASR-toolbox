@@ -7,7 +7,8 @@ from scipy.linalg import lstsq, solve
 
 def _mad(X):
     """Median absolute deviation."""
-    return np.median(np.abs(X - np.median(X, axis=0)), axis=0)
+    axis = -1 if X.ndim > 1 else 0
+    return np.median(np.abs(X - np.median(X, axis=0)), axis=axis)
 
 
 def _sliding_window(array, window, steps=1, axis=1):

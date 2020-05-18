@@ -2,13 +2,13 @@ from typing import Tuple, Union
 import logging
 from mne.io.eeglab.eeglab import RawEEGLAB
 
-from .clean_windows import clean_windows
-from .clean_channels import clean_channels
-from .clean_channels_nolocs import clean_channels_nolocs
-from .clean_drifts import clean_drifts
-from .clean_flatlines import clean_flatlines
-from .clean_asr import clean_asr
-from .helpers.decorators import catch_exception
+from python.clean_windows import clean_windows
+from python.clean_channels import clean_channels
+from python.clean_channels_nolocs import clean_channels_nolocs
+from python.clean_drifts import clean_drifts
+from python.clean_flatlines import clean_flatlines
+from python.clean_asr import clean_asr
+from python.helpers.decorators import catch_exception
 
 
 @catch_exception

@@ -1,6 +1,6 @@
 from typing import Tuple
 import numpy as np
-import scipy
+from scipy.signal import filtfilt
 from mne.io.eeglab.eeglab import RawEEGLAB
 
 from .helpers.design_fir import design_fir
@@ -31,15 +31,15 @@ def clean_drifts(signal: RawEEGLAB, transition: Tuple[float, float] = (0.5, 1.),
 
     """
     # design highpass FIR filter
-    transition = 2 * (transition / signal.info["sfreq"])
+    transition = 2 * (np.array((transition)) / signal.info["sfreq"])
 
     wnd = design_kaiser(transition[0], transition[1], attenuation, odd=True)
     F, A = np.array([0, transition[0], transition[1], 1]), np.array([0, 0, 1, 1])
-    B = design_fir(len(wnd) - 1, F, A, W=wnd)
+    B = design_fir(len(wnd), F, A, W=wnd)
 
     # apply it, channel by channel to save memory
     for c in range(signal.info["nchan"]):
-        signal._data[c, :] = scipy.signal.filtfilt(B, 1, signal._data[c, :])
+        signal._data[c, :] = filtfilt(B, 1, signal._data[c, :])
     signal.info["clean_drift_kernel"] = B
 
     return signal

@@ -1,4 +1,4 @@
-from typing import Tuple, Dict, Union, Any
+from typing import Tuple, Dict, Union, Any, Optional
 import logging
 import numpy as np
 from scipy.signal import lfilter
@@ -7,7 +7,7 @@ from .rasr_nonlinear_eigenspace import nonlinear_eigenspace
 from .helpers.positive_definite_karcher_mean import positive_definite_karcher_mean
 
 
-def asr_process(data: np.ndarray, srate: int, state: Dict[str: Any], lookahead: Union[float, None],
+def asr_process(data: np.ndarray, srate: int, state: Dict[str, Optional[Any]], lookahead: Union[float, None],
                 windowlen: float = 0.1,  stepsize: int = 4, maxdims: float = 1., maxmem: int = 256
                 ) -> Tuple[np.ndarray, dict]:
     """ Processing function for the Artifact Subspace Reconstruction (ASR) method.

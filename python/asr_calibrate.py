@@ -1,18 +1,18 @@
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import numpy as np
 import logging
 from scipy import linalg
 from scipy.signal import lfilter
 
-from .helpers.fit_eeg_distribution import fit_eeg_distribution
-from .helpers.block_geometric_median import block_geometric_median
-from .helpers.utils import _sliding_window
-from .helpers.yukewalk import yulewalk
+from python.helpers.fit_eeg_distribution import fit_eeg_distribution
+from python.helpers.block_geometric_median import block_geometric_median
+from python.helpers.utils import _sliding_window
+from python.helpers.yukewalk import yulewalk
 
 
 def asr_calibrate(X: np.ndarray, sfreq: float , cutoff: float = 10., blocksize: int = 5, window_len: float = 0.5,
                   window_overlap: float = 0.66, max_dropout_fraction: float = 0.1, min_clean_fraction: float = 0.25
-                  ) -> Dict[str: Any]:
+                  ) -> Dict[str, Optional[Any]]:
     """Calibration function for the Artifact Subspace Reconstruction method.
 
     The input to this data is a multi-channel time series of calibration data.

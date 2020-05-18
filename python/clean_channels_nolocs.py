@@ -1,7 +1,6 @@
 import numpy as np
-import scipy
 import logging
-
+from scipy.signal import filtfilt
 from mne.io.eeglab.eeglab import RawEEGLAB
 from .helpers.design_fir import design_fir
 from .helpers.design_kaiser import design_kaiser
@@ -71,8 +70,8 @@ def clean_channels_nolocs(signal: RawEEGLAB, min_corr: float = .45, ignored_quan
         else:
             F = np.r_[np.array([0, 45, 50, 55, 60, 65]) * 2 / signal.info["sfreq"], 1]
             A = np.array([1, 1, 0, 1, 0, 1, 1])
-        B = design_fir(N=len(B) - 1, F=F, A=A, wnd=B)
-        X = np.vstack([scipy.signal.filtfilt(B, 1, signal._data[c, :]) for c in reversed(range(C))])
+        B = design_fir(N=len(B), F=F, A=A, W=B)
+        X = np.vstack([filtfilt(B, 1, signal._data[c, :]) for c in reversed(range(C))])
 
     else:
         X = signal._data
