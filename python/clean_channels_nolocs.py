@@ -2,10 +2,11 @@ import numpy as np
 import logging
 from scipy.signal import filtfilt
 from mne.io.eeglab.eeglab import RawEEGLAB
-from .helpers.design_fir import design_fir
-from .helpers.design_kaiser import design_kaiser
-from .helpers.utils import _sliding_window
-from .helpers.decorators import catch_exception
+from python.helpers.design_fir import design_fir
+from python.helpers.design_kaiser import design_kaiser
+from python.helpers.utils import _sliding_window
+from python.helpers.decorators import catch_exception
+from python.helpers.utils import _pick_good_channels
 
 
 @catch_exception
@@ -50,14 +51,16 @@ def clean_channels_nolocs(signal: RawEEGLAB, min_corr: float = .45, ignored_quan
         data set with bad channels removed
 
     """
+    X = signal.get_data(picks=_pick_good_channels(signal))
+    C, S = X.shape
+
     # flag channels
     if (max_broken_time >= 0) and (max_broken_time <= 1):
-        max_broken_time = signal._data.shape[1] * max_broken_time
+        max_broken_time = S * max_broken_time
     else:
         max_broken_time = signal.info["sfreq"] * max_broken_time
 
     # optionally ignore both 50 and 60 Hz spectral components...
-    C, S = signal._data.shape
     if linenoise_aware:
         B = design_kaiser(lo=2 * 45 / signal.info["sfreq"],
                           hi=2 * 50 / signal.info["sfreq"],
@@ -71,20 +74,17 @@ def clean_channels_nolocs(signal: RawEEGLAB, min_corr: float = .45, ignored_quan
             F = np.r_[np.array([0, 45, 50, 55, 60, 65]) * 2 / signal.info["sfreq"], 1]
             A = np.array([1, 1, 0, 1, 0, 1, 1])
         B = design_fir(N=len(B), F=F, A=A, W=B)
-        X = np.vstack([filtfilt(B, 1, signal._data[c, :]) for c in reversed(range(C))])
-
-    else:
-        X = signal._data
+        X = np.vstack([filtfilt(B, 1, X[c, :]) for c in reversed(range(C))])
 
     # for each window, flag channels with too low correlation to any other channel (outside the ignored quantile)
     flagged = []
-    retained = np.arange(C - np.ceil(C * ignored_quantile))
-    window_len *= signal.info["sfreq"]
-    for x in _sliding_window(X, window=window_len):
+    retained = int(C - np.ceil(C * ignored_quantile))
+    window_len = int(window_len * signal.info["sfreq"])
+    for x in _sliding_window(X, window=window_len, steps=window_len, axis=1).swapaxes(0, 1):
         sort_cc = np.sort(np.abs(np.corrcoef(x)), axis=0)
-        flagged.append(np.all(sort_cc[retained, :] < min_corr, axis=1))
+        flagged.append(np.r_[np.all(sort_cc[:retained, :] < min_corr, axis=1), [False] * (C - retained)])
 
-    include_channels = np.sum(np.vstack(flagged).T, axis=1) * window_len <= max_broken_time
+    include_channels = np.sum(np.vstack(flagged), axis=0) * window_len <= max_broken_time
 
     # apply removal
     if np.all(~include_channels):
@@ -93,17 +93,9 @@ def clean_channels_nolocs(signal: RawEEGLAB, min_corr: float = .45, ignored_quan
     else:
         logging.info("Now removing bad channels...")
 
-        if len(signal.info["chs"]) == len(signal._data):
-            # update info
-            signal.info["chs"] = [i for (i, v) in zip(signal.info["chs"], include_channels) if v]
-            # signal.info["bads"] = [i for (i, v) in zip(signal.ch_names, include_channels) if not v]
-            signal.nbchan = sum(include_channels)
+        # update info
+        good_channels = set(signal.ch_names).difference(set(signal.info["bads"]))
+        signal.info["bads"].extend(i for (i, v) in zip(good_channels, include_channels) if not v)
 
-            # apply cleaning
-            signal.data = signal.data[include_channels, :]
-            pos = signal._get_channel_positions(signal.ch_names)[include_channels, :]
-            signal._set_channel_positions(pos, signal.ch_names)
-
-            signal.info["clean_channel_mask"] = include_channels
-
+        # signal.info["clean_channel_mask"] = include_channels
     return signal

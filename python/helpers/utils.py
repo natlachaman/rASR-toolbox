@@ -3,6 +3,8 @@ import numpy as np
 from scipy.signal import lfilter
 from scipy.linalg import toeplitz
 from scipy.linalg import lstsq, solve
+from mne import pick_channels
+from mne.io.eeglab.eeglab import RawEEGLAB
 
 
 def _mad(X):
@@ -140,3 +142,8 @@ def _mldivide(A, B):
         return solve(A, B)
     else:
         return lstsq(A, B)
+
+
+def _pick_good_channels(signal: RawEEGLAB) -> list:
+    """Pick bad channels from `info` structure and return channels indices."""
+    return pick_channels(ch_names=signal.ch_names, include=signal.ch_names, exclude=signal.info["bads"])

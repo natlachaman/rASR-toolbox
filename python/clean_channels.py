@@ -4,9 +4,10 @@ import logging
 
 from mne.io.eeglab.eeglab import RawEEGLAB
 from mne.channels.interpolation import _make_interpolation_matrix
-from .helpers.design_fir import design_fir
-from .helpers.utils import _mad, _sliding_window
-from .helpers.decorators import catch_exception
+from python.helpers.design_fir import design_fir
+from python.helpers.utils import _mad, _sliding_window
+from python.helpers.decorators import catch_exception
+from python.helpers.utils import _pick_good_channels
 
 
 @catch_exception
@@ -50,33 +51,32 @@ def clean_channels(signal: RawEEGLAB, corr_threshold: float = 0.85, noise_thresh
         data set with bad channels removed
 
     """
+    X = signal.get_data(picks=_pick_good_channels(signal))
+    C, S = X.shape
+
     # flag channels
     if (max_broken_time >= 0) and (max_broken_time <= 1):
-        max_broken_time = signal._data.shape[1] * max_broken_time
+        max_broken_time = S * max_broken_time
     else:
         max_broken_time = signal.info["sfreq"] * max_broken_time
 
     # optionally ignore < 50 Hz spectral components...
     logging.info("Scannning for bad channels...")
-
-    C, S = signal._data.shape
     if signal.info["sfreq"] > 100:
         # remove signal content above 50 Hz
         F = np.r_[np.array([0, 45, 50]) * 2 / signal.info["sfreq"], 1]
         A = np.array([1, 1, 0, 0])
         B = design_fir(100, F, A)
 
-        X = np.vstack([filtfilt(B, 1, signal._data[c, :]) for c in reversed(range(C))])
+        X_ = np.vstack([filtfilt(B, 1, X[c, :]) for c in reversed(range(C))])
 
         # determine z-scored level of EM noise-to-signal ratio for each channel
-        noisiness = _mad(signal._data - X) / _mad(X)
+        noisiness = _mad(X - X_) / _mad(X_)
         znoise = (noisiness - np.median(noisiness, axis=0)) / (_mad(noisiness) * 1.4826)
 
         # trim channels based on that
         noise_mask = znoise < noise_threshold
     else:
-
-        X = signal._data
         # transpose added. Otherwise gives an error below at removed_channels = removed_channels | noise_mask
         noise_mask = np.ones(C)
 
@@ -122,20 +122,12 @@ def clean_channels(signal: RawEEGLAB, corr_threshold: float = 0.85, noise_thresh
         raise
 
     else:
-        channel_names = [ch for ch, v in zip(signal.ch_names, include_channels) if ~v]
-        logging.info(f"Removing channels {channel_names} and dropping signal meta-data...")
-        if len(signal.info["chs"]) == len(signal._data):
-            # update info
-            signal.info["chs"] = [i for (i, v) in zip(signal.info["chs"], include_channels) if v]
-            # signal.info["bads"] = [i for (i, v) in zip(signal.ch_names, include_channels) if not v]
-            signal.nbchan = np.sum(include_channels)
+        logging.info(f"Removing bad channels...")
+        # update info
+        good_channels = set(signal.ch_names).difference(set(signal.info["bads"]))
+        signal.info["bads"] = [i for (i, v) in zip(good_channels, include_channels) if not v]
 
-            # apply cleaning
-            signal.data = signal.data[include_channels, :]
-            pos = signal._get_channel_positions(signal.ch_names)[include_channels, :]
-            signal._set_channel_positions(pos, signal.ch_names)
-
-            signal.info["clean_channel_mask"] = include_channels
+        # signal.info["clean_channel_mask"] = include_channels
 
     return signal
 

@@ -154,7 +154,6 @@ def clean_artifacts(signal:RawEEGLAB, channel_criterion: float = .85, line_noise
     the Statistics toolbox, but can be skipped/bypassed if needed (see documentation).
 
     """
-
     EEG = clean_flatlines(signal, flatline_criterion)
     EEG = clean_drifts(EEG, highpass)
 

@@ -3,10 +3,10 @@ import numpy as np
 from scipy.signal import filtfilt
 from mne.io.eeglab.eeglab import RawEEGLAB
 
-from .helpers.design_fir import design_fir
-from .helpers.design_kaiser import design_kaiser
-from .helpers.decorators import catch_exception
-
+from python.helpers.design_fir import design_fir
+from python.helpers.design_kaiser import design_kaiser
+from python.helpers.decorators import catch_exception
+from python.helpers.utils import _pick_good_channels
 
 @catch_exception
 def clean_drifts(signal: RawEEGLAB, transition: Tuple[float, float] = (0.5, 1.), attenuation: int = 80) -> RawEEGLAB:
@@ -38,8 +38,9 @@ def clean_drifts(signal: RawEEGLAB, transition: Tuple[float, float] = (0.5, 1.),
     B = design_fir(len(wnd), F, A, W=wnd)
 
     # apply it, channel by channel to save memory
+    X = signal.get_data(picks=_pick_good_channels(signal))
     for c in range(signal.info["nchan"]):
-        signal._data[c, :] = filtfilt(B, 1, signal._data[c, :])
-    signal.info["clean_drift_kernel"] = B
+        signal._data[c, :] = filtfilt(B, 1, X[c, :])
+    # signal.info["clean_drift_kernel"] = B
 
     return signal

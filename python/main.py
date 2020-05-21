@@ -57,5 +57,6 @@ class EEG:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=3)
     eeg = EEG()
     eeg.clean()

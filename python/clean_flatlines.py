@@ -1,7 +1,8 @@
 import numpy as np
 import logging
 from mne.io.eeglab.eeglab import RawEEGLAB
-from .helpers.decorators import catch_exception
+from python.helpers.decorators import catch_exception
+from python.helpers.utils import _pick_good_channels
 
 
 @catch_exception
@@ -35,8 +36,9 @@ def clean_flatlines(signal: RawEEGLAB, max_flatline_duration: int = 5 ,max_allow
     # flag channels
     include_channels = np.ones((signal.info["nchan"],), dtype="bool")
     eps = np.finfo(float).eps
+    X = signal.get_data(picks=_pick_good_channels(signal))
     for c in range(signal.info["nchan"]):
-        allowed_or_not = np.r_[False, np.abs(np.diff(signal._data[c, :])) < (max_allowed_jitter * eps)]
+        allowed_or_not = np.r_[False, np.abs(np.diff(X[c, :])) < (max_allowed_jitter * eps)]
         zero_intervals = np.diff(np.r_[allowed_or_not, False]).cumsum() * allowed_or_not
         lengths_intervals = np.unique(zero_intervals, return_counts=True)[1][1:]
 
@@ -49,16 +51,7 @@ def clean_flatlines(signal: RawEEGLAB, max_flatline_duration: int = 5 ,max_allow
 
     else:
         logging.info("Now removing flat-line channels...")
-
-        if len(signal.info['chs']) == len(signal._data):
-            # update info
-            signal.info["chs"] = [i for (i, v) in zip(signal.info["chs"], include_channels) if v]
-            # signal.info["bads"] = [i for (i, v) in zip(signal.ch_names, include_channels) if not v]
-            signal.nbchan = np.sum(include_channels)
-
-            # apply cleaning
-            signal.data = signal._data[include_channels, :]
-            pos = signal._get_channel_positions(signal.ch_names)[include_channels, :]
-            signal._set_channel_positions(pos, signal.ch_names)
+        good_channels = set(signal.ch_names).difference(set(signal.info["bads"]))
+        signal.info["bads"] = [i for (i, v) in zip(good_channels, include_channels) if not v]
 
     return signal
