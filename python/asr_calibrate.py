@@ -2,15 +2,16 @@ from typing import Dict, Any, Optional
 import numpy as np
 import logging
 from scipy import linalg
-from scipy.signal import lfilter
+from scipy.signal import lfilter, lfilter_zi
+from mne.io.eeglab.eeglab import RawEEGLAB
 
 from python.helpers.fit_eeg_distribution import fit_eeg_distribution
 from python.helpers.block_geometric_median import block_geometric_median
-from python.helpers.utils import _sliding_window
+from python.helpers.utils import _sliding_window, _pick_good_channels
 from python.helpers.yukewalk import yulewalk
 
 
-def asr_calibrate(X: np.ndarray, sfreq: float , cutoff: float = 10., blocksize: int = 5, window_len: float = 0.5,
+def asr_calibrate(signal: RawEEGLAB, sfreq: float , cutoff: float = 10., blocksize: int = 5, window_len: float = 0.5,
                   window_overlap: float = 0.66, max_dropout_fraction: float = 0.1, min_clean_fraction: float = 0.25
                   ) -> Dict[str, Optional[Any]]:
     """Calibration function for the Artifact Subspace Reconstruction method.
@@ -36,7 +37,7 @@ def asr_calibrate(X: np.ndarray, sfreq: float , cutoff: float = 10., blocksize: 
 
     Parameters
     ----------
-    X : np.ndarray
+    X : RawEEGLAB
         Calibration data [#channels x #samples]; *zero-mean* (e.g., high-pass filtered) and
         reasonably clean EEG of not much less than 30 seconds length (this method is typically
         used with 1 minute or more).
@@ -76,9 +77,10 @@ def asr_calibrate(X: np.ndarray, sfreq: float , cutoff: float = 10., blocksize: 
     logging.info('ASR Calibrating...')
 
     # window length for calculating thresholds
+    X = signal.get_data(picks=_pick_good_channels(signal))
     C, S = X.shape
-    window_len *= sfreq
-    window_stride = window_len * (1 - window_overlap)
+    window_len = int(window_len * sfreq)
+    window_stride = int(np.round(window_len * (1 - window_overlap)))
 
     # use yulewalk to design the filter
     # Initialise yulewalk-filter coefficients with sensible defaults
@@ -88,7 +90,9 @@ def asr_calibrate(X: np.ndarray, sfreq: float , cutoff: float = 10., blocksize: 
 
     # apply the signal shaping filter and initialize the IIR filter state
     X[~np.isfinite(X)] = 0
-    X, iirstate = lfilter(B, A, X, zi=2)
+    # zi = lfilter_zi(B, A)
+    # X, zf = lfilter(B, A, X, zi=zi)
+    X = lfilter(B, A, X)
 
     if np.any(~np.isfinite(X)):
         logging.error("The IIR filter diverged on your data. Please try using either a more conservative filter "
@@ -112,18 +116,18 @@ def asr_calibrate(X: np.ndarray, sfreq: float , cutoff: float = 10., blocksize: 
     x = np.abs(np.dot(V, X))
     x = _sliding_window(x, window=window_len, steps=window_stride)
 
-    mu = np.empty_like(C)
-    sigma = np.empty_like(C)
+    mu = np.empty((C))
+    sigma = np.empty((C))
     for c in reversed(range(C)):
         # compute RMS amplitude for each window
         rms = np.sqrt(np.sum(x[c, :, :] ** 2, axis=1) / window_len)
 
         # robustly fit a distribution to the clean EEG part
-        mu[c], sigma[c], _, _ = fit_eeg_distribution(X=rms,
-                                                     min_clean_fraction=min_clean_fraction,
-                                                     max_dropout_fraction=max_dropout_fraction)
-
+        _mu, _sigma, _, _ = fit_eeg_distribution(X=rms,
+                                                 min_clean_fraction=min_clean_fraction,
+                                                 max_dropout_fraction=max_dropout_fraction)
+        mu[c], sigma[c] = _mu, _sigma
     T = np.dot(np.diag(mu + cutoff * sigma), V.T)
     logging.info('ASR calibration complete.')
 
-    return {"M": M, "T": T, "B": B, "A": A, "iir": iirstate}
+    return {"M": M, "T": T, "B": B, "A": A}

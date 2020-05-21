@@ -74,9 +74,9 @@ def asr_process(data: np.ndarray, srate: int, state: Dict[str, Optional[Any]], l
 
     # initialize prior filter state by extrapolating available data into the past (if necessary)
     if "carry" not in state.keys():
-        state["carry"] = np.tile(2 * data[:, 1], (1, P)) - data[:, 1 + (np.arange(P)[::-1] % S)]
+        state["carry"] = np.tile(2 * data[:, 1], (P, 1)).T - data[:, 1 + (np.arange(P)[::-1] % S)]
 
-    data = np.r_[state["carry"], data]
+    data = np.c_[state["carry"], data]
     data[~np.isfinite(data)] = 0
 
     # split up the total sample range into k chunks that will fit in memory
@@ -87,17 +87,22 @@ def asr_process(data: np.ndarray, srate: int, state: Dict[str, Optional[Any]], l
     if splits > 1:
         logging.info(f"Now cleaning data in {splits} blocks")
 
-    for i in range(splits):
-        brange = 1 + np.floor(np.arange((i - 1) * S / splits), np.min(S, np.floor(i * S / splits))).astype(int)
+    for i in range(1, splits+1):
+        start = int(1 + np.floor((i-1) * S / splits))
+        stop = np.minimum(S, int(np.floor(i * S / splits)))
+        brange = np.arange(start, stop)
 
         if brange.size != 0:
             # get spectrally shaped data X for statistics computation (range shifted by lookahead) and also get a
             # subrange of the data (according to splits)
-            X, state["iir"] = lfilter(b=state["B"],
-                                      a=state["A"],
-                                      x=data[:, brange + P],
-                                      zi=state["iir"],
-                                      axis=1)
+            # X, state["iir"] = lfilter(b=state["B"],
+            #                           a=state["A"],
+            #                           x=data[:, brange + P],
+            #                           zi=state["iir"],
+            #                           axis=1)
+            X = lfilter(b=state["B"],
+                        a=state["A"],
+                        x=data[:, brange + P])
 
             # the Riemann version uses the sample covariance matrix here:
             SCM = 1 / X.shape[-1] * X @ X.T # channels x channels
@@ -138,8 +143,8 @@ def asr_process(data: np.ndarray, srate: int, state: Dict[str, Optional[Any]], l
 
             # do the reconstruction in intervals of length stepsize (or shorter at the end of a chunk)
             last_keep = state["last_trivial"] if "last_trivial" in state else keep
-            for i in range(len(update_at)):
-                n, last_n = update_at[i], update_at[i-1]
+            for j in range(len(update_at)):
+                n, last_n = update_at[j], update_at[j-1]
                 # apply the reconstruction to intermediate samples (using raised-cosine blending)
                 if ~keep.all() or ~last_keep.all():
                     subrange = np.arange(last_n + 1, n)

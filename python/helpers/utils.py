@@ -33,14 +33,18 @@ def _histc(x, nbins):
     """Histogram count (bin-centered). As implemented in histc in Matalb."""
     # bin_edges = np.r_[-np.Inf, 0.5 * (bin_centers[:-1] + bin_centers[1:]),
     #     np.Inf]
-    bin_edges = np.r_[np.arange(nbins - 1), np.Inf]
-    counts, edges =  np.histogram(x, bin_edges)
-    return counts
+    bin_edges = np.r_[np.arange(nbins-1), np.Inf]
+
+    H = np.zeros((len(x), nbins-1))
+    for i, x_i in enumerate(x):
+        counts, _ = np.histogram(x_i, bin_edges)
+        H[i, :] = counts
+    return H
 
 
 def _kl_divergence(p, q):
     """KL divergence"""
-    return np.sum(np.where(p != 0, p * np.log(p / q), 0))
+    return np.sum(np.where(p != 0, p * np.log(p / q), 0), axis=1)
 
 
 # def _block_covariance(data, window=128, overlap=0.5, padding=True, estimator='cov'):

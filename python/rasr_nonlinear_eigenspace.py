@@ -48,14 +48,14 @@ def nonlinear_eigenspace(L: np.ndarray, k: float, alpha: int = 1) -> (np.ndarray
     solver = TrustRegions()
 
     # Cost function evaluation
-    @pymanopt.function.Callable
+
     def cost(X):
         rhoX = np.sum(X ** 2, 1, keepdims=True)  # diag(X*X')
         val = 0.5 * np.trace(X.T @ (L * X)) + (alpha / 4) * (rhoX.T @ _mldivide(L, rhoX))
         return val
 
     # Euclidean gradient evaluation
-    @pymanopt.function.Callable
+    # @pymanopt.function.Callable
     def egrad(X):
         rhoX = np.sum(X ** 2, 1, keepdims=True)  # diag(X*X')
         g = L @ X + alpha * np.diagflat(_mldivide(L, rhoX)) @ X
@@ -63,7 +63,7 @@ def nonlinear_eigenspace(L: np.ndarray, k: float, alpha: int = 1) -> (np.ndarray
 
     # Euclidean Hessian evaluation
     # Note: Manopt automatically converts it to the Riemannian counterpart.
-    @pymanopt.function.Callable
+    # @pymanopt.function.Callable
     def ehess(X, U):
         rhoX = np.sum(X ** 2, 1, keepdims=True)  # np.diag(X * X')
         rhoXdot = 2 * np.sum(X.dot(U), 1)
@@ -80,7 +80,8 @@ def nonlinear_eigenspace(L: np.ndarray, k: float, alpha: int = 1) -> (np.ndarray
     # Call manoptsolve to automatically call an appropriate solver.
     # Note: it calls the trust regions solver as we have all the required
     # ingredients, namely, gradient and Hessian, information.
-    problem = Problem(manifold=manifold, cost=cost, egrad=egrad, ehess=ehess, verbosity=0)
+    # todo: UnboundLocalError: local variable 'j' referenced before assignment
+    problem = Problem(manifold=manifold, cost=cost, egrad=egrad, ehess=ehess, verbosity=2)
     Xsol = solver.solve(problem, U0)
 
     return S0, Xsol

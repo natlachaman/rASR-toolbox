@@ -7,6 +7,7 @@ from python.clean_windows import clean_windows
 from python.asr_calibrate import asr_calibrate
 from python.asr_process import asr_process
 from python.helpers.decorators import catch_exception
+from python.helpers.utils import _pick_good_channels
 
 
 @catch_exception
@@ -97,11 +98,12 @@ def clean_asr(signal: RawEEGLAB, stepsize: Union[int, None] = None, cutoff: int 
     calibration, which is fine for mildly contaminated data -- see ReferenceMaxBadChannels below).
 
     """
-    windowlen = np.max(windowlen, 1.5 * signal["nchan"] / signal["sfreq"])
-    stepsize = np.floor(signal["sfreq"] * windowlen / 2) if stepsize is None else stepsize
+    windowlen = max(windowlen, 1.5 * signal.info["nchan"] / signal.info["sfreq"])
+    stepsize = int(np.floor(signal.info["sfreq"] * windowlen / 2) if stepsize is None else stepsize)
 
     # first determine the reference (calibration) data
     logging.info("Finding a clean section of the data...")
+    ref_section= signal
     if ref_maxbadchannels is not None and ref_tolerances is not None and ref_wndlen is not None:
         try:
             ref_section = clean_windows(signal=signal,
@@ -111,23 +113,21 @@ def clean_asr(signal: RawEEGLAB, stepsize: Union[int, None] = None, cutoff: int 
         except Exception as e:
             logging.error(e)
             logging.warning("Falling back to using the entire data for calibration.")
-            ref_section = signal
-    else:
-        ref_section = signal
 
     # calibrate on the reference data
     logging.info("Estimating calibration statistics; this may take a while...")
-    state = asr_calibrate(X=ref_section._data,
+    state = asr_calibrate(signal=ref_section,
                           sfreq=ref_section.info["sfreq"],
                           cutoff=cutoff)
     del ref_section
     
     # extrapolate last few samples of the signal
-    sig = np.r_[signal._data, (2 * signal._data[:, -1]) - (signal._data[:, -int(windowlen / 2 * signal["sfreq"]): -2])]
+    X = signal.get_data(picks=_pick_good_channels(signal))
+    sig = np.c_[X, (2 * X[:, -1])[:, np.newaxis] - (X[:, -int(np.round((windowlen / 2 * signal.info["sfreq"]))): -2])]
     
     # process signal using ASR
     signal._data, state = asr_process(data=sig,
-                                      srate=signal["sfreq"],
+                                      srate=signal.info["sfreq"],
                                       state=state,
                                       windowlen=windowlen,
                                       lookahead=windowlen / 2,
@@ -135,6 +135,6 @@ def clean_asr(signal: RawEEGLAB, stepsize: Union[int, None] = None, cutoff: int 
                                       maxdims=maxdims)
     
     # shift signal content back (to compensate for processing delay)
-    signal._data = signal._data[:, state["carry"].shape[1]:]
+    signal._data = X[:, state["carry"].shape[1]:]
 
     return signal

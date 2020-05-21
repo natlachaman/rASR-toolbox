@@ -44,6 +44,6 @@ def block_geometric_median(X: np.ndarray, blocksize: int, tol: float = 1e-5, max
         X = X_replace
 
     y = np.median(X, axis=0)
-    y = geometric_median(X, tol, y, max_iter) / blocksize
+    y = geometric_median(X=X, y=y, tol=tol, max_iter=max_iter) / blocksize
 
     return y

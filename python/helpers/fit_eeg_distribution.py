@@ -3,7 +3,7 @@ import numpy as np
 from scipy.special import gammaincinv, gamma
 
 from .utils import _histc, _kl_divergence
-
+np.seterr(divide='ignore', invalid='ignore')
 
 def fit_eeg_distribution(X: np.ndarray, min_clean_fraction: float = .25, max_dropout_fraction: float = .1,
                          quants: Tuple[float, float] = (0.022, 0.6), step_sizes: Tuple[float, float] = (0.01, 0.01),
@@ -82,9 +82,10 @@ def fit_eeg_distribution(X: np.ndarray, min_clean_fraction: float = .25, max_dro
     # get matrix of shifted data ranges
     a = np.arange(int(np.round(n * max_width)))
     b = np.round(np.arange(lower_min, lower_min + max_dropout_fraction, step=step_sizes[0]) * n)
-    X = X[a + b]
-    X1 = X[0, :]
-    X -= X1
+    idx = (a[np.newaxis, :] + b[:, np.newaxis]).astype(int)
+    X = X[idx]
+    X1 = X[:, 0]
+    X -= X1[:, np.newaxis]
 
     # for each interval width...
     opt_val = np.Inf
@@ -92,12 +93,12 @@ def fit_eeg_distribution(X: np.ndarray, min_clean_fraction: float = .25, max_dro
     opt_bounds = np.zeros((1, len(quants)))
     opt_lu = np.zeros((1, 2))
 
-    for m in np.round(np.arange(min_width, max_width, step=step_sizes[1]) * n)[::-1]:
+    for m in np.round(np.arange(min_width, max_width, step=step_sizes[1]) * n).astype(int)[::-1]:
 
         # scale and bin the data in the intervals
-        nbins = np.round(3 * np.log2(1 + m / 2))
-        H = X[:m, :] * (nbins / X[m, :])
-        q = _histc(X, nbins) + 0.01
+        nbins = int(np.round(3 * np.log2(1 + m / 2)))
+        H = X[:, :m] * (np.divide(nbins, X[:, m]))[:, np.newaxis]
+        q = _histc(H, nbins) + 0.01
 
         # for each shape value...
         for b in range(len(beta)):
@@ -117,7 +118,7 @@ def fit_eeg_distribution(X: np.ndarray, min_clean_fraction: float = .25, max_dro
                 opt_val = min_val
                 opt_beta = beta[b]
                 opt_bounds = bounds
-                opt_lu = np.r_[X1[idx], X1[idx] + X[m, idx]]
+                opt_lu = np.r_[X1[idx], X1[idx] + X[idx, m]]
 
     # recover distribution parameters at optimum
     alpha = (opt_lu[1] - opt_lu[0]) / np.diff(opt_bounds)
