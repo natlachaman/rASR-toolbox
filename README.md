@@ -1,4 +1,29 @@
-# rASR-toolbox
+## rASR-toolbox
+This is a python implementation of rASR-toolbox written in Matlab. 
+
+### How to run the code
+To run the code you'll first need to install **Git, Python3.7 and Anaconda**. 
+Installation steps for these tools are different for every OS. 
+
+Once you have those installed, open the terminal and clone this repository by typing the following:
+```bash
+git clone https://github.com/natlachaman/rASR-toolbox.git
+```
+
+Next, we'll need to create a conda environment to run the code. Go to the root directory of rASR-toolbox, create a 
+conda environment with the required dependencies, and activate it:
+```bash
+cd /path/to/rASR-toolbox/
+conda env create --name rasr-toolbox-env --file requirements.txt python=3.7
+conda activate rasr-toolbox-env
+```
+Finally, you can run the main routine of the toolbox by typing:
+```bash
+python python/main.py
+```
+
+
+### List of python-to-matlab mapping of scripts
 
 ```
 |-- matlab
