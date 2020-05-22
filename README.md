@@ -10,7 +10,7 @@ Once you have those installed, open the terminal and clone this repository by ty
 git clone https://github.com/natlachaman/rASR-toolbox.git
 ```
 
-Next, we'll need to create a conda environment to run the code. Go to the root directory of rASR-toolbox, create a 
+Next, create a conda environment to run the code on. Go to the root directory of rASR-toolbox, create a 
 conda environment with the required dependencies, and activate it:
 ```bash
 cd /path/to/rASR-toolbox/
