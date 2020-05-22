@@ -38,9 +38,7 @@ def clean_drifts(signal: RawEEGLAB, transition: Tuple[float, float] = (0.5, 1.),
     B = design_fir(len(wnd), F, A, W=wnd)
 
     # apply it, channel by channel to save memory
-    X = signal.get_data(picks=_pick_good_channels(signal))
-    for c in range(signal.info["nchan"]):
-        signal._data[c, :] = filtfilt(B, 1, X[c, :])
-    # signal.info["clean_drift_kernel"] = B
+    fun_filtfilt = lambda x, b, a: filtfilt(b, a, x) # use
+    signal.apply_function(fun=fun_filtfilt, channel_wise=True, b=B, a=1)
 
     return signal

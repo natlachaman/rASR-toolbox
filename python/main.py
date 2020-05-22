@@ -44,19 +44,21 @@ class EEG:
                                            noloc_channel_criterion_excluded=self.noloc_channel_criterion_excluded)
 
     def visualize(self):
-        # simple visualization
-        C, S = self.data.shape
-        fig, ax = plt.subplots(C, 1)
-        ax = ax.ravel()
-
-        # plot each channels separately
-        for c, ax_i in enumerate(ax):
-            ax_i.plot(self.data[c, :], color="b")
-            if self.clean_data is not None:
-                ax_i.plot(self.clean_data[c, :], color="r")
+        # # simple visualization
+        # C, S = self.data.shape
+        # fig, ax = plt.subplots(C, 1)
+        # ax = ax.ravel()
+        #
+        # # plot each channels separately
+        # for c, ax_i in enumerate(ax):
+        #     ax_i.plot(self.data[c, :], color="b")
+        #     if self.clean_data is not None:
+        #         ax_i.plot(self.clean_data[c, :], color="r")
+        fig = self.clean_data.plot(bgcolor='w')
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=3)
     eeg = EEG()
     eeg.clean()
+    eeg.visualize()

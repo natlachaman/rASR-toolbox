@@ -7,7 +7,7 @@ from mne.io.eeglab.eeglab import RawEEGLAB
 
 from python.helpers.fit_eeg_distribution import fit_eeg_distribution
 from python.helpers.block_geometric_median import block_geometric_median
-from python.helpers.utils import _sliding_window, _pick_good_channels
+from python.helpers.utils import _sliding_window
 from python.helpers.yukewalk import yulewalk
 
 
@@ -77,7 +77,7 @@ def asr_calibrate(signal: RawEEGLAB, sfreq: float , cutoff: float = 10., blocksi
     logging.info('ASR Calibrating...')
 
     # window length for calculating thresholds
-    X = signal.get_data(picks=_pick_good_channels(signal))
+    X = signal.get_data()
     C, S = X.shape
     window_len = int(window_len * sfreq)
     window_stride = int(np.round(window_len * (1 - window_overlap)))

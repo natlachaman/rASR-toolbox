@@ -1,13 +1,13 @@
 import numpy as np
 from scipy.signal import filtfilt
 import logging
+from tqdm import tqdm
 
 from mne.io.eeglab.eeglab import RawEEGLAB
 from mne.channels.interpolation import _make_interpolation_matrix
 from python.helpers.design_fir import design_fir
 from python.helpers.utils import _mad, _sliding_window
 from python.helpers.decorators import catch_exception
-from python.helpers.utils import _pick_good_channels
 
 
 @catch_exception
@@ -51,7 +51,7 @@ def clean_channels(signal: RawEEGLAB, corr_threshold: float = 0.85, noise_thresh
         data set with bad channels removed
 
     """
-    X = signal.get_data(picks=_pick_good_channels(signal))
+    X = signal.get_data()
     C, S = X.shape
 
     # flag channels
@@ -102,9 +102,10 @@ def clean_channels(signal: RawEEGLAB, corr_threshold: float = 0.85, noise_thresh
     interpolation = np.hstack(interpolation)
 
     # calculate each channel's correlation to its RANSAC reconstruction for each window
+    logging.info("Computing each channel's correaltion to its RANSAC reconstruction for each window..")
     window_len *= int(signal.info["sfreq"])
     corrs = [] # (channels, window)
-    for x in _sliding_window(X, window=window_len, steps=window_len, axis=1).swapaxes(0, 1):
+    for x in tqdm(_sliding_window(X, window=window_len, steps=window_len, axis=1).swapaxes(0, 1)):
         y = np.sort(np.reshape(np.dot(x.T, interpolation), (window_len, C, num_samples)), axis=2)
         y = y[:, :, int(np.round(num_samples / 2))]
         corrs.append(np.sum(np.dot(x, y), axis=1) / (np.sqrt(np.sum(x ** 2, axis=1)) * np.sqrt(np.sum(y ** 2, axis=0))))
@@ -126,7 +127,7 @@ def clean_channels(signal: RawEEGLAB, corr_threshold: float = 0.85, noise_thresh
         # update info
         good_channels = set(signal.ch_names).difference(set(signal.info["bads"]))
         signal.info["bads"] = [i for (i, v) in zip(good_channels, include_channels) if not v]
-
+        signal.drop_channels(signal.info["bads"])
         # signal.info["clean_channel_mask"] = include_channels
 
     return signal

@@ -155,14 +155,13 @@ def clean_artifacts(signal:RawEEGLAB, channel_criterion: float = .85, line_noise
 
     """
     EEG = clean_flatlines(signal, flatline_criterion)
-    # EEG = clean_drifts(EEG, highpass)
+    EEG = clean_drifts(EEG, highpass)
 
     try:
-        pass
-        # EEG = clean_channels(signal=EEG,
-        #                      corr_threshold=channel_criterion,
-        #                      noise_threshold=line_noise_criterion,
-        #                      max_broken_time=channel_criterion_max_bad_time)
+        EEG = clean_channels(signal=EEG,
+                             corr_threshold=channel_criterion,
+                             noise_threshold=line_noise_criterion,
+                             max_broken_time=channel_criterion_max_bad_time)
     except Exception:
         logging.info("Your dataset appears to lack correct channel locations; "
                      "using a location-free channel cleaning method.")

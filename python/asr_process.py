@@ -2,9 +2,10 @@ from typing import Tuple, Dict, Union, Any, Optional
 import logging
 import numpy as np
 from scipy.signal import lfilter
+from tqdm import tqdm
 
-from .rasr_nonlinear_eigenspace import nonlinear_eigenspace
-from .helpers.positive_definite_karcher_mean import positive_definite_karcher_mean
+from python.rasr_nonlinear_eigenspace import nonlinear_eigenspace
+from python.helpers.positive_definite_karcher_mean import positive_definite_karcher_mean
 
 
 def asr_process(data: np.ndarray, srate: int, state: Dict[str, Optional[Any]], lookahead: Union[float, None],
@@ -85,9 +86,9 @@ def asr_process(data: np.ndarray, srate: int, state: Dict[str, Optional[Any]], l
                      (maxmem * 1024 * 1024 - C * C * P * 8 * 3)))
 
     if splits > 1:
-        logging.info(f"Now cleaning data in {splits} blocks")
+        logging.info(f"Now cleaning data in {splits} blocks; this may take a while...")
 
-    for i in range(1, splits+1):
+    for i in tqdm(range(1, splits+1), total=splits):
         start = int(1 + np.floor((i-1) * S / splits))
         stop = np.minimum(S, int(np.floor(i * S / splits)))
         brange = np.arange(start, stop)
@@ -118,9 +119,9 @@ def asr_process(data: np.ndarray, srate: int, state: Dict[str, Optional[Any]], l
                 Xcov = SCM
 
             # if there is no previous R (from the end of the last chunk), we estimate it right at the first sample
-            update_at = np.minimum(np.arange(stepsize, (X.shape[-1] + stepsize - 1), step=stepsize), X.shape[1])
+            update_at = np.minimum(np.arange(stepsize, (X.shape[-1] + stepsize - 1), step=stepsize), X.shape[-1])
             if "last_R" not in state.keys():
-                update_at = np.r_[1, update_at]
+                update_at = np.r_[0, update_at]
                 state["last_R"] = np.eye(C)
 
             V, D = nonlinear_eigenspace(Xcov, C) # np.diag()?
@@ -129,8 +130,7 @@ def asr_process(data: np.ndarray, srate: int, state: Dict[str, Optional[Any]], l
 
             # determine which components to keep (variance below directional threshold
             # or not admissible for rejection)
-            keep = D < np.sum(np.dot(state["T"], V) ** 2, axis=0)
-            keep += np.arange(C) < C - maxdims
+            keep = (D < np.sum(np.dot(state["T"], V) ** 2, axis=0)) | (np.arange(C) < (C - maxdims))
 
             # update the reconstruction matrix R (reconstruct artifact components using
             # the mixing matrix)
@@ -143,14 +143,14 @@ def asr_process(data: np.ndarray, srate: int, state: Dict[str, Optional[Any]], l
 
             # do the reconstruction in intervals of length stepsize (or shorter at the end of a chunk)
             last_keep = state["last_trivial"] if "last_trivial" in state else keep
-            for j in range(len(update_at)):
-                n, last_n = update_at[j], update_at[j-1]
+            for j in range(len(update_at) - 1):
+                last_n, n = update_at[j], update_at[j+1]
                 # apply the reconstruction to intermediate samples (using raised-cosine blending)
                 if ~keep.all() or ~last_keep.all():
-                    subrange = np.arange(last_n + 1, n)
+                    subrange = np.arange(last_n, n).astype(int)
                     blend = (1 - np.cos(np.pi * np.arange(n - last_n)) / (n - last_n)) / 2
-                    data[: subrange] = blend * R.dot(data[: subrange]) + \
-                                       (1 - blend) * state['last_R'].dot(data[: subrange])
+                    data[:, subrange] = blend * R.dot(data[:, subrange]) + \
+                                       (1 - blend) * state['last_R'].dot(data[:, subrange])
 
             state["last_trivial"] = keep.all()
             state["last_R"] = R

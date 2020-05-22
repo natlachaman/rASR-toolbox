@@ -7,7 +7,6 @@ from python.clean_windows import clean_windows
 from python.asr_calibrate import asr_calibrate
 from python.asr_process import asr_process
 from python.helpers.decorators import catch_exception
-from python.helpers.utils import _pick_good_channels
 
 
 @catch_exception
@@ -122,7 +121,7 @@ def clean_asr(signal: RawEEGLAB, stepsize: Union[int, None] = None, cutoff: int 
     del ref_section
     
     # extrapolate last few samples of the signal
-    X = signal.get_data(picks=_pick_good_channels(signal))
+    X = signal.get_data()
     sig = np.c_[X, (2 * X[:, -1])[:, np.newaxis] - (X[:, -int(np.round((windowlen / 2 * signal.info["sfreq"]))): -2])]
     
     # process signal using ASR

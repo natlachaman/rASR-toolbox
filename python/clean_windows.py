@@ -3,11 +3,12 @@ import numpy as np
 import logging
 import mne
 from mne.io.eeglab.eeglab import RawEEGLAB
+from tqdm import tqdm
 
 from python.helpers.utils import _sliding_window
 from python.helpers.decorators import catch_exception
 from python.helpers.fit_eeg_distribution import fit_eeg_distribution
-from python.helpers.utils import _pick_good_channels
+
 
 @catch_exception
 def clean_windows(signal: RawEEGLAB, max_bad_channels: float = .2, z_thresholds: Tuple[float, float] = (-3.5, 5),
@@ -63,16 +64,16 @@ def clean_windows(signal: RawEEGLAB, max_bad_channels: float = .2, z_thresholds:
         mask of retained samples.
 
     """
-    X = signal.get_data(picks=_pick_good_channels(signal))
+    X = signal.get_data()
     C, S = X.shape
 
-    window_len *= int(signal.info["sfreq"])
+    window_len = int(window_len * signal.info["sfreq"])
     window_stride = int(np.round((window_len * (1 - window_overlap))))
 
     logging.info("Determining time window rejection thresholds...")
     X = _sliding_window(X, window=window_len, steps=window_stride)[:, :-1, :]
     z_rms = np.zeros(X.shape[:-1])
-    for c in reversed(range(C)):
+    for c in tqdm(reversed(range(C)), total=C):
         # compute RMS amplitude for each window
         _X = np.sqrt(np.sum(X[c, :, :] ** 2, axis=1) / window_len)
 
@@ -99,15 +100,22 @@ def clean_windows(signal: RawEEGLAB, max_bad_channels: float = .2, z_thresholds:
     if np.min(z_thresholds) < 0:
         remove_windows[sorted_z_rms[max_bad_channels, :] < np.min(z_thresholds)] = True
 
-    onsets = np.round(np.arange(S - window_len, step=window_stride)).astype(int)
-    win_annot = mne.Annotations(onset=onsets[remove_windows],
-                    duration=window_len,
-                    description=["bad_win"] * len(onsets[remove_windows]))
-    signal.set_annotations(win_annot)
-
     # apply removal
     logging.info('Removing windows...')
-    # signal._data = signal._data[sample_mask]
+    # annotate bad windows that will be dropped
+    onsets = np.round(np.arange(S - window_len, step=window_stride)).astype(int)
+    onsets_in_seconds = signal.times[onsets]
+    win_annot = mne.Annotations(onset=onsets_in_seconds[remove_windows],
+                                duration=window_len / signal.info["sfreq"],
+                                description=["bad_win"] * len(onsets_in_seconds[remove_windows]))
+    signal.set_annotations(win_annot)
+
+    # drop them
+    sample_mask = np.ones((S)).astype(bool)
+    for o in onsets[remove_windows]:
+        sample_mask[o:o+window_len] = False
+
+    signal._data = signal._data[:, sample_mask]
     # signal.n_times = signal._data.shape[1]
     # signal.times.max = signal.times.min + (signal.n_time - 1) / signal.info["srate"]
 

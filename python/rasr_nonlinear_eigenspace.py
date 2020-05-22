@@ -42,13 +42,12 @@ def nonlinear_eigenspace(L: np.ndarray, k: float, alpha: int = 1) -> (np.ndarray
 
     # Grassmann manifold description
     manifold = Grassmann(n, k)
-    manifold._dimension = 1  # hack
+    # manifold._dimension = 1  # hack
 
     # A solver that involves the hessian (check if correct TODO)
     solver = TrustRegions()
 
     # Cost function evaluation
-
     def cost(X):
         rhoX = np.sum(X ** 2, 1, keepdims=True)  # diag(X*X')
         val = 0.5 * np.trace(X.T @ (L * X)) + (alpha / 4) * (rhoX.T @ _mldivide(L, rhoX))
@@ -81,7 +80,7 @@ def nonlinear_eigenspace(L: np.ndarray, k: float, alpha: int = 1) -> (np.ndarray
     # Note: it calls the trust regions solver as we have all the required
     # ingredients, namely, gradient and Hessian, information.
     # todo: UnboundLocalError: local variable 'j' referenced before assignment
-    problem = Problem(manifold=manifold, cost=cost, egrad=egrad, ehess=ehess, verbosity=2)
-    Xsol = solver.solve(problem, U0)
+    problem = Problem(manifold=manifold, cost=cost, egrad=egrad, ehess=ehess, verbosity=0)
+    Xsol = solver.solve(problem, x=U0, maxinner=4)
 
-    return S0, Xsol
+    return Xsol, S0

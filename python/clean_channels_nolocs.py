@@ -6,7 +6,6 @@ from python.helpers.design_fir import design_fir
 from python.helpers.design_kaiser import design_kaiser
 from python.helpers.utils import _sliding_window
 from python.helpers.decorators import catch_exception
-from python.helpers.utils import _pick_good_channels
 
 
 @catch_exception
@@ -51,7 +50,7 @@ def clean_channels_nolocs(signal: RawEEGLAB, min_corr: float = .45, ignored_quan
         data set with bad channels removed
 
     """
-    X = signal.get_data(picks=_pick_good_channels(signal))
+    X = signal.get_data()
     C, S = X.shape
 
     # flag channels
@@ -96,6 +95,7 @@ def clean_channels_nolocs(signal: RawEEGLAB, min_corr: float = .45, ignored_quan
         # update info
         good_channels = set(signal.ch_names).difference(set(signal.info["bads"]))
         signal.info["bads"].extend(i for (i, v) in zip(good_channels, include_channels) if not v)
-
+        signal.drop_channels(signal.info["bads"])
         # signal.info["clean_channel_mask"] = include_channels
+
     return signal
