@@ -52,6 +52,7 @@ def clean_channels(signal: RawEEGLAB, corr_threshold: float = 0.85, noise_thresh
 
     """
     X = signal.get_data()
+    X = X[~np.isnan(X)]
     C, S = X.shape
 
     # flag channels

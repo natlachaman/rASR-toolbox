@@ -122,6 +122,7 @@ def clean_asr(signal: RawEEGLAB, stepsize: Union[int, None] = None, cutoff: int 
     
     # extrapolate last few samples of the signal
     X = signal.get_data()
+    X = X[~np.isnan(X)]
     sig = np.c_[X, (2 * X[:, -1])[:, np.newaxis] - (X[:, -int(np.round((windowlen / 2 * signal.info["sfreq"]))): -2])]
     
     # process signal using ASR

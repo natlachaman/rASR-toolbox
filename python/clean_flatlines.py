@@ -36,6 +36,7 @@ def clean_flatlines(signal: RawEEGLAB, max_flatline_duration: int = 5 ,max_allow
     include_channels = np.ones((signal.info["nchan"],), dtype="bool")
     eps = np.finfo(float).eps
     X = signal.get_data()
+    X = X[~np.isnan(X)]
     for c in range(signal.info["nchan"]):
         allowed_or_not = np.r_[False, np.abs(np.diff(X[c, :])) < (max_allowed_jitter * eps)]
         zero_intervals = np.diff(np.r_[allowed_or_not, False]).cumsum() * allowed_or_not

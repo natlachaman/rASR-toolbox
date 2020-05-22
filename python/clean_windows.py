@@ -65,6 +65,7 @@ def clean_windows(signal: RawEEGLAB, max_bad_channels: float = .2, z_thresholds:
 
     """
     X = signal.get_data()
+    X = X[~np.isnan(X)]
     C, S = X.shape
 
     window_len = int(window_len * signal.info["sfreq"])
@@ -111,11 +112,11 @@ def clean_windows(signal: RawEEGLAB, max_bad_channels: float = .2, z_thresholds:
     signal.set_annotations(win_annot)
 
     # drop them
-    sample_mask = np.ones((S)).astype(bool)
+    sample_mask = np.zeros((S)).astype(bool)
     for o in onsets[remove_windows]:
-        sample_mask[o:o+window_len] = False
+        sample_mask[o:o+window_len] = True
 
-    signal._data = signal._data[:, sample_mask]
+    signal._data[:, sample_mask] = np.nan
     # signal.n_times = signal._data.shape[1]
     # signal.times.max = signal.times.min + (signal.n_time - 1) / signal.info["srate"]
 

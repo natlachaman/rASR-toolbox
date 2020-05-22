@@ -78,6 +78,7 @@ def asr_calibrate(signal: RawEEGLAB, sfreq: float , cutoff: float = 10., blocksi
 
     # window length for calculating thresholds
     X = signal.get_data()
+    X = X[~np.isnan(X)]
     C, S = X.shape
     window_len = int(window_len * sfreq)
     window_stride = int(np.round(window_len * (1 - window_overlap)))

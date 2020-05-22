@@ -51,6 +51,7 @@ def clean_channels_nolocs(signal: RawEEGLAB, min_corr: float = .45, ignored_quan
 
     """
     X = signal.get_data()
+    X = X[~np.isnan(X)]
     C, S = X.shape
 
     # flag channels
