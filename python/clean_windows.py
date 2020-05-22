@@ -105,13 +105,12 @@ def clean_windows(signal: RawEEGLAB, max_bad_channels: float = .2, z_thresholds:
     # annotate bad windows that will be dropped
     onsets = np.round(np.arange(S - window_len, step=window_stride)).astype(int)
     onsets_in_seconds = signal.times[onsets]
-    win_annot = mne.Annotations(onset=onsets_in_seconds[remove_windows],
-                                duration=window_len / signal.info["sfreq"],
-                                description=["bad_win"] * len(onsets_in_seconds[remove_windows]))
-    signal.set_annotations(win_annot)
+    signal.annotations.append(onset=onsets_in_seconds[remove_windows],
+                              duration=window_len / signal.info["sfreq"],
+                              description=["bad_win"] * len(onsets_in_seconds[remove_windows]))
 
     # drop them
-    sample_mask = np.zeros((S)).astype(bool)
+    sample_mask = np.zeros((S,)).astype(bool)
     for o in onsets[remove_windows]:
         sample_mask[o:o+window_len] = True
 

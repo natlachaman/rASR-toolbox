@@ -22,9 +22,13 @@ Finally, you can run the main routine of the toolbox by typing:
 python python/main.py
 ```
 
+### Testing
+Testing was done very manually: running the same block of code in python and Matlab, and comparing their output arrays visually. 
+Whether the end results are exactly equal is uncertain, but if not it should be pretty close.
+Ideally, we would have a set of tests for every function, even for the `scipy.sginal` ones to compare that 
+implementations are comparable. However, that is very time consuming and time limitations did not allow it.
 
 ### List of python-to-matlab mapping of scripts
-
 ```
 |-- matlab
 |   |-- asr_calibrate.m                 -- python/asr_calibrate.py
@@ -61,4 +65,16 @@ python python/main.py
 |   |   |-- (yukewalk() from SigProTool)    -- python/helpers/yukewalk.py
 |   |   |-- (positive_definite_karcher_...  -- python/helpers/positive_definite_karcher_means.py
             means() from manpot)    
+```
 
+### List of known issues (or possible issues)
+
+[1] In `asr_calibrate.py` line 94, `lfilter(B, A, X)` does not return the final state `zj` unless 
+an initial state `zi` is passed. When doing so (by running `zi = lfilter_zi(B, A)`), `lfilter()` throws an error.
+Parameter `zj` is later on used in `asr_process.py` in line 99 (stored as `irr`) as initial state. 
+Since we cannot obtain it, we again don't user an initial state.
+This is most probably altering the final output.
+
+[2] In `rasr_nonlinear_eigenspace.py` line 84, `maxinner` is set to 4. This will affect the results to where it converges
+and the time it takes to converge. Not sure what is the right tunning of this. Please check with Matlab's `manopt` 
+implementation.

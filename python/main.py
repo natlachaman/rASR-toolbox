@@ -1,6 +1,5 @@
 import os
 import logging
-import matplotlib.pyplot as plt
 from mne.io.eeglab.eeglab import read_raw_eeglab
 
 from python.clean_artifacts import clean_artifacts
@@ -30,35 +29,30 @@ class EEG:
 
     def clean(self):
         self.clean_data = clean_artifacts(signal=self.data,
-                                           channel_criterion=self.channel_criterion,
-                                           line_noise_criterion=self.line_noise_criterion,
-                                           burst_criterion=self.burst_criterion,
-                                           window_criterion=self.window_criterion,
-                                           highpass=self.highpass,
-                                           channel_criterion_max_bad_time=self.channel_criterion_max_bad_time,
-                                           burst_criterion_ref_max_bad_chns=self.burst_criterion_ref_max_bad_chns,
-                                           burst_criterion_ref_tolerances=self.burst_criterion_ref_tolerances,
-                                           window_criterion_tolerances=self.window_criterion_tolerances,
-                                           flatline_criterion=self.flatline_criterion,
-                                           nolocs_channel_criterion=self.nolocs_channel_criterion,
-                                           noloc_channel_criterion_excluded=self.noloc_channel_criterion_excluded)
+                                          channel_criterion=self.channel_criterion,
+                                          line_noise_criterion=self.line_noise_criterion,
+                                          burst_criterion=self.burst_criterion,
+                                          window_criterion=self.window_criterion,
+                                          highpass=self.highpass,
+                                          channel_criterion_max_bad_time=self.channel_criterion_max_bad_time,
+                                          burst_criterion_ref_max_bad_chns=self.burst_criterion_ref_max_bad_chns,
+                                          burst_criterion_ref_tolerances=self.burst_criterion_ref_tolerances,
+                                          window_criterion_tolerances=self.window_criterion_tolerances,
+                                          flatline_criterion=self.flatline_criterion,
+                                          nolocs_channel_criterion=self.nolocs_channel_criterion,
+                                          noloc_channel_criterion_excluded=self.noloc_channel_criterion_excluded)
 
-    def visualize(self):
-        # # simple visualization
-        # C, S = self.data.shape
-        # fig, ax = plt.subplots(C, 1)
-        # ax = ax.ravel()
-        #
-        # # plot each channels separately
-        # for c, ax_i in enumerate(ax):
-        #     ax_i.plot(self.data[c, :], color="b")
-        #     if self.clean_data is not None:
-        #         ax_i.plot(self.clean_data[c, :], color="r")
-        fig = self.clean_data.plot(bgcolor='w')
+    def visualize(self, start=20, duration=20):
+        # simple viz
+        _ = self.clean_data.plot(color="k", start=start, duration=duration, bgcolor="w", bad_color="r", scalings='auto')
+        # _ = self.clean_data.plot_projs_topomap(colorbar=True)
+        # _ = self.clean_data.plot_psd(average=True)
+        # _ = self.clean_data.plot_psd()
+        _ = self.clean_data.plot_sensors(ch_type='eeg', show_names=True)
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=3)
+    logging.basicConfig(level=1)
     eeg = EEG()
     eeg.clean()
     eeg.visualize()
