@@ -97,3 +97,8 @@ This is most probably altering the final output.
 [2] In `rasr_nonlinear_eigenspace.py` line 84, `maxinner` is set to 4. This will affect the results to where it converges
 and the time it takes to converge. Not sure what is the right tunning of this. Please check with Matlab's `manopt` 
 implementation.
+
+[3] Not sure if this is an issue, but part of the code (code related to `clean_asr.py`) was taken from 
+[this repository](https://github.com/nbara/python-meegkit/blob/master/meegkit/asr.py). They have a BSD 3-Clause License
+that allows for commercial use, modification, distribtuion and private use. So I don't think I'd be a problem to use it, 
+but probably you'll need to mention it somewhere to avoid plausible legal issues.
