@@ -4,7 +4,7 @@ from scipy.signal import filtfilt
 from mne.io.eeglab.eeglab import RawEEGLAB
 from python.helpers.design_fir import design_fir
 from python.helpers.design_kaiser import design_kaiser
-from python.helpers.utils import _sliding_window
+from python.helpers.utils import _sliding_window, _remove_nan
 from python.helpers.decorators import catch_exception
 
 
@@ -50,8 +50,7 @@ def clean_channels_nolocs(signal: RawEEGLAB, min_corr: float = .45, ignored_quan
         data set with bad channels removed
 
     """
-    X = signal.get_data()
-    X = X[~np.isnan(X)]
+    X = _remove_nan(signal.get_data())
     C, S = X.shape
 
     # flag channels

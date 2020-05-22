@@ -6,7 +6,7 @@ from tqdm import tqdm
 from mne.io.eeglab.eeglab import RawEEGLAB
 from mne.channels.interpolation import _make_interpolation_matrix
 from python.helpers.design_fir import design_fir
-from python.helpers.utils import _mad, _sliding_window
+from python.helpers.utils import _mad, _sliding_window, _remove_nan
 from python.helpers.decorators import catch_exception
 
 
@@ -51,8 +51,7 @@ def clean_channels(signal: RawEEGLAB, corr_threshold: float = 0.85, noise_thresh
         data set with bad channels removed
 
     """
-    X = signal.get_data()
-    X = X[~np.isnan(X)]
+    X = _remove_nan(signal.get_data())
     C, S = X.shape
 
     # flag channels

@@ -151,3 +151,7 @@ def _mldivide(A, B):
 def _pick_good_channels(signal: RawEEGLAB) -> list:
     """Pick bad channels from `info` structure and return channels indices."""
     return pick_channels(ch_names=signal.ch_names, include=signal.ch_names, exclude=signal.info["bads"])
+
+
+def _remove_nan(X):
+    return np.vstack([x[~np.isnan(x)] for x in X])

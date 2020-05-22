@@ -5,7 +5,7 @@ import mne
 from mne.io.eeglab.eeglab import RawEEGLAB
 from tqdm import tqdm
 
-from python.helpers.utils import _sliding_window
+from python.helpers.utils import _sliding_window, _remove_nan
 from python.helpers.decorators import catch_exception
 from python.helpers.fit_eeg_distribution import fit_eeg_distribution
 
@@ -64,8 +64,7 @@ def clean_windows(signal: RawEEGLAB, max_bad_channels: float = .2, z_thresholds:
         mask of retained samples.
 
     """
-    X = signal.get_data()
-    X = X[~np.isnan(X)]
+    X = _remove_nan(signal.get_data())
     C, S = X.shape
 
     window_len = int(window_len * signal.info["sfreq"])

@@ -2,6 +2,7 @@ import numpy as np
 import logging
 from mne.io.eeglab.eeglab import RawEEGLAB
 from python.helpers.decorators import catch_exception
+from python.helpers.utils import _remove_nan
 
 
 @catch_exception
@@ -35,8 +36,8 @@ def clean_flatlines(signal: RawEEGLAB, max_flatline_duration: int = 5 ,max_allow
     # flag channels
     include_channels = np.ones((signal.info["nchan"],), dtype="bool")
     eps = np.finfo(float).eps
-    X = signal.get_data()
-    X = X[~np.isnan(X)]
+    X = _remove_nan(signal.get_data())
+
     for c in range(signal.info["nchan"]):
         allowed_or_not = np.r_[False, np.abs(np.diff(X[c, :])) < (max_allowed_jitter * eps)]
         zero_intervals = np.diff(np.r_[allowed_or_not, False]).cumsum() * allowed_or_not
