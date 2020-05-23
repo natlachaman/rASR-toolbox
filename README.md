@@ -1,5 +1,5 @@
 ## rASR-toolbox
-This is a python implementation of rASR-toolbox written in Matlab. 
+This is a Python implementation of rASR-toolbox written in Matlab. 
 
 ### How to run the code
 To run the code you'll first need to install **Git, Python3.7 and Anaconda**. 
@@ -23,31 +23,32 @@ python python/main.py
 ```
 
 ### Main routine
-The main class of this toolbox is the `EEG` class defined in `main.py`, that shows primarily **loads, cleans and 
-visualizes** EEG data files (`.set`). The class can eb used as follows:
+The main class of this toolbox is the `EEG` class defined in `main.py`, that primarily **loads, cleans and 
+visualizes** EEG data files (`.set`). The class can be used as follows:
 ```python
 eeg = EEG(filepath="path/to/file.set")
 eeg.clean()
 eeg.visualize()
 ```
-`EEG(filepath="path/to/file.set")` instantiates the class and loads the file to `EEG.data`. It also sets the same 
-default values to input argument variables from `clean_artifact.m`. Parameters, in necessary, can be changed as follows:
+`EEG(filepath="path/to/file.set")` instantiates the class and loads the file to `EEG.data`. It also sets the
+default values as found in input argument variables from `clean_artifact.m`. Parameters, if necessary, can be changed 
+as follows:
 ```python
 eeg = EEG(filepath="path/to/file.set")
 eeg.flatline_criterion = 7
 eeg.highpass = (.2, .8)
 ```
-`EEG.clean_data()` executes the main cleaning routine `clean_artifact()` as done by EEGLAB in Matlab.
+`EEG.clean_data()` executes the main cleaning routine `clean_artifact()` as done by the `clean_artifact.m` EEG plugin in Matlab.
 `EEG.visualize()` offers a minimum working visualization functionality, that can easily be extended.
 
 
 ### Testing
-Testing was done very manually: running the same block of code in python and Matlab, and comparing their output arrays visually. 
+Testing was done manually: running the same block of code in Python and Matlab, and comparing their output arrays visually. 
 Whether the end results are exactly equal is uncertain, but if not it should be pretty close.
 Ideally, we would have a set of tests for every function, even for the `scipy.sginal` ones to compare that 
 implementations are comparable. However, that is very time consuming and time limitations did not allow it.
 
-### List of python-to-matlab mapping of scripts
+### List of Python-to-Matlab mapping of scripts
 ```
 |-- matlab
 |   |-- asr_calibrate.m                 -- python/asr_calibrate.py
