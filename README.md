@@ -48,6 +48,25 @@ Whether the end results are exactly equal is uncertain, but if not it should be 
 Ideally, we would have a set of tests for every function, even for the `scipy.sginal` ones to compare that 
 implementations are comparable. However, that is very time consuming and time limitations did not allow it.
 
+An great option would be to use [MATLAB Engine API for Python](https://www.mathworks.com/help/matlab/matlab_external/call-user-script-and-function-from-python.html).
+When in a conda environment, [install MATLAB Engine API for Python in nondefault locations](https://www.mathworks.com/help/matlab/matlab_external/install-matlab-engine-api-for-python-in-nondefault-locations.html)
+Like so:
+```bash
+conda activate rASR-tollbox-env
+cd {MATLAB ROOT FOLDER}/extern/engines/python # e.g., cd /usr/local/MATLAB/R2020a/extern/engines/python 
+python setup.py install --prefix="{HOME FOLDER}/miniconda3/envs/rASR-toolbox-env" 
+# e.g., python setup.py install --prefix="/home/nat/miniconda3/envs/rASR-toolbox-env"
+```
+**Note: admin permissions are necessary for this operation (in Windows, run terminal as "Run as priviledged administrator")**
+
+Go back to the folder where your Matlab scripts live, open python and run, for instance:
+```python
+import matlab.engine
+eng = matlab.engine.start_matlab()
+output = eng.clean_artifacts(nargout=0) # run clean_artifacts.m
+# use output to compare to python `clean_artifacts.py` output
+```
+
 ### List of Python-to-Matlab mapping of scripts
 ```
 |-- matlab
