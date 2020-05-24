@@ -1,4 +1,4 @@
-name: rASR-toolbox-test
+name: rASR-toolbox
 channels:
   - conda-forge
   - defaults
