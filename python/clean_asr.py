@@ -3,11 +3,11 @@ import logging
 import numpy as np
 
 from mne.io.eeglab.eeglab import RawEEGLAB
-from python.clean_windows import clean_windows
-from python.asr_calibrate import asr_calibrate
-from python.asr_process import asr_process
-from python.helpers.decorators import catch_exception
-from python.helpers.utils import _remove_nan
+from clean_windows import clean_windows
+from asr_calibrate import asr_calibrate
+from asr_process import asr_process
+from helpers.decorators import catch_exception
+from helpers.utils import _remove_nan
 
 
 @catch_exception

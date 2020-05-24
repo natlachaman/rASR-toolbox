@@ -2,10 +2,10 @@ import numpy as np
 import logging
 from scipy.signal import filtfilt
 from mne.io.eeglab.eeglab import RawEEGLAB
-from python.helpers.design_fir import design_fir
-from python.helpers.design_kaiser import design_kaiser
-from python.helpers.utils import _sliding_window, _remove_nan
-from python.helpers.decorators import catch_exception
+from helpers.design_fir import design_fir
+from helpers.design_kaiser import design_kaiser
+from helpers.utils import _sliding_window, _remove_nan
+from helpers.decorators import catch_exception
 
 
 @catch_exception

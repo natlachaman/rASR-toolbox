@@ -1,8 +1,10 @@
 import os
 import logging
+
+import matplotlib.pyplot as plt
 from mne.io.eeglab.eeglab import read_raw_eeglab
 
-from python.clean_artifacts import clean_artifacts
+from clean_artifacts import clean_artifacts
 
 
 class EEG:
@@ -10,7 +12,7 @@ class EEG:
         self._filepath = filepath
         if ~os.path.exists(filepath):
             logging.info("Couldn't find file. Loading .set file in data/output instead...")
-            data_path = "/".join(os.getcwd().split("/")[:-1])
+            data_path = "/".join(os.getcwd().split("/"))
             self._filepath = os.path.join(data_path, "data", "output", "sme_1_1.xdf_filt.set")
         self.data = read_raw_eeglab(self._filepath, preload=True)
         self.channel_criterion = .85
@@ -49,6 +51,7 @@ class EEG:
         # _ = self.clean_data.plot_psd(average=True)
         # _ = self.clean_data.plot_psd()
         _ = self.clean_data.plot_sensors(ch_type='eeg', show_names=True)
+        plt.show()
 
 
 if __name__ == "__main__":

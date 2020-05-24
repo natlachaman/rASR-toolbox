@@ -4,8 +4,8 @@ import numpy as np
 from scipy.signal import lfilter
 from tqdm import tqdm
 
-from python.rasr_nonlinear_eigenspace import nonlinear_eigenspace
-from python.helpers.positive_definite_karcher_mean import positive_definite_karcher_mean
+from rasr_nonlinear_eigenspace import nonlinear_eigenspace
+from helpers.positive_definite_karcher_mean import positive_definite_karcher_mean
 
 
 def asr_process(data: np.ndarray, srate: int, state: Dict[str, Optional[Any]], lookahead: Union[float, None],

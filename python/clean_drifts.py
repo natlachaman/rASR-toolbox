@@ -3,10 +3,10 @@ import numpy as np
 from scipy.signal import filtfilt
 from mne.io.eeglab.eeglab import RawEEGLAB
 
-from python.helpers.design_fir import design_fir
-from python.helpers.design_kaiser import design_kaiser
-from python.helpers.decorators import catch_exception
-from python.helpers.utils import _pick_good_channels
+from helpers.design_fir import design_fir
+from helpers.design_kaiser import design_kaiser
+from helpers.decorators import catch_exception
+
 
 @catch_exception
 def clean_drifts(signal: RawEEGLAB, transition: Tuple[float, float] = (0.5, 1.), attenuation: int = 80) -> RawEEGLAB:

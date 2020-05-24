@@ -1,8 +1,8 @@
 import numpy as np
 import logging
 from mne.io.eeglab.eeglab import RawEEGLAB
-from python.helpers.decorators import catch_exception
-from python.helpers.utils import _remove_nan
+from helpers.decorators import catch_exception
+from helpers.utils import _remove_nan
 
 
 @catch_exception

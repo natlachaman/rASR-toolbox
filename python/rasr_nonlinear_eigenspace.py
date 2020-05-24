@@ -1,4 +1,3 @@
-import pymanopt
 import numpy as np
 from scipy import linalg
 
@@ -6,7 +5,7 @@ from pymanopt import Problem
 from pymanopt.manifolds import Grassmann
 from pymanopt.solvers import TrustRegions
 
-from .helpers.utils import _mldivide
+from helpers.utils import _mldivide
 
 
 def nonlinear_eigenspace(L: np.ndarray, k: float, alpha: int = 1) -> (np.ndarray, np.ndarray):

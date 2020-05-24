@@ -5,9 +5,9 @@ from tqdm import tqdm
 
 from mne.io.eeglab.eeglab import RawEEGLAB
 from mne.channels.interpolation import _make_interpolation_matrix
-from python.helpers.design_fir import design_fir
-from python.helpers.utils import _mad, _sliding_window, _remove_nan
-from python.helpers.decorators import catch_exception
+from helpers.design_fir import design_fir
+from helpers.utils import _mad, _sliding_window, _remove_nan
+from helpers.decorators import catch_exception
 
 
 @catch_exception

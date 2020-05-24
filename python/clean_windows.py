@@ -1,13 +1,12 @@
 from typing import Tuple, List
 import numpy as np
 import logging
-import mne
 from mne.io.eeglab.eeglab import RawEEGLAB
 from tqdm import tqdm
 
-from python.helpers.utils import _sliding_window, _remove_nan
-from python.helpers.decorators import catch_exception
-from python.helpers.fit_eeg_distribution import fit_eeg_distribution
+from helpers.utils import _sliding_window, _remove_nan
+from helpers.decorators import catch_exception
+from helpers.fit_eeg_distribution import fit_eeg_distribution
 
 
 @catch_exception
