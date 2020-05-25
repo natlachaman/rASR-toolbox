@@ -4,7 +4,8 @@ import logging
 import matplotlib.pyplot as plt
 from mne.io.eeglab.eeglab import read_raw_eeglab
 
-from clean_artifacts import clean_artifacts
+from python.clean_artifacts import clean_artifacts
+from python.helpers.utils import _replace_nan
 
 
 class EEG:
@@ -12,7 +13,7 @@ class EEG:
         self._filepath = filepath
         if ~os.path.exists(filepath):
             logging.info("Couldn't find file. Loading .set file in data/output instead...")
-            data_path = "/".join(os.getcwd().split("/"))
+            data_path = "/".join(os.getcwd().split("/")[:-1])
             self._filepath = os.path.join(data_path, "data", "output", "sme_1_1.xdf_filt.set")
         self.data = read_raw_eeglab(self._filepath, preload=True)
         self.channel_criterion = .85
@@ -45,17 +46,25 @@ class EEG:
                                           noloc_channel_criterion_excluded=self.noloc_channel_criterion_excluded)
 
     def visualize(self, start=20, duration=20):
+        # X = self.clean_data.get_data()
+        # X = _replace_nan(X)
+        # self.clean_data = X
+
         # simple viz
-        _ = self.clean_data.plot(color="k", start=start, duration=duration, bgcolor="w", bad_color="r", scalings='auto')
+        fig = self.data.plot(color="k", start=start, duration=duration, bgcolor="w", bad_color="r", scalings='auto')
         # _ = self.clean_data.plot_projs_topomap(colorbar=True)
         # _ = self.clean_data.plot_psd(average=True)
         # _ = self.clean_data.plot_psd()
-        _ = self.clean_data.plot_sensors(ch_type='eeg', show_names=True)
+        # _ = self.clean_data.plot_sensors(ch_type='eeg', show_names=True)
         plt.show()
+        return fig
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=1)
     eeg = EEG()
+    fig = eeg.visualize()
+    fig.savefig("raw_data.png")
     eeg.clean()
-    eeg.visualize()
+    fig = eeg.visualize()
+    fig.savefig("clean_data.png")
